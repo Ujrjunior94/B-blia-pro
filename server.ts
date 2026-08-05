@@ -1,0 +1,263 @@
+import express from 'express';
+import path from 'path';
+import { GoogleGenAI, Type } from '@google/genai';
+import { createServer as createViteServer } from 'vite';
+import { getStrongEntry } from './src/data/strongsLexicon';
+import { getBookStudyGuide } from './src/data/bibleJourneyData';
+
+async function startServer() {
+  const app = express();
+  const PORT = 3000;
+
+  app.use(express.json({ limit: '5mb' }));
+
+  // Initialize Gemini AI client lazily/safely
+  const getAiClient = () => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY não foi configurada nos segredos.');
+    }
+    return new GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        },
+      },
+    });
+  };
+
+  // API Routes
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', app: 'Jornada da Bíblia', timestamp: new Date().toISOString() });
+  });
+
+  // Strong's Lookup API
+  app.get('/api/theology/strongs/:id', (req, res) => {
+    const strongId = req.params.id;
+    const entry = getStrongEntry(strongId);
+    if (entry) {
+      res.json({ success: true, entry });
+    } else {
+      res.status(404).json({ success: false, message: `Número de Strong ${strongId} não encontrado.` });
+    }
+  });
+
+  // Book Study Guide Lookup API
+  app.get('/api/theology/book-study/:bookId', (req, res) => {
+    const bookId = req.params.bookId;
+    const study = getBookStudyGuide(bookId);
+    res.json({ success: true, study });
+  });
+
+  // AI Theological Assistant Chat Endpoint
+  app.post('/api/theology/chat', async (req, res) => {
+    try {
+      const { message, history } = req.body;
+      if (!message || typeof message !== 'string') {
+        res.status(400).json({ error: 'Mensagem inválida.' });
+        return;
+      }
+
+      const ai = getAiClient();
+      const systemInstruction = `Você é um Teólogo e Educador Cristão Sênior especializado no aplicativo "Jornada da Bíblia".
+Seu conhecimento bíblico é profundo, preciso, exegético e puramente centrado em Jesus Cristo e na história da redenção.
+Você domina os 66 livros da Bíblia canônica, línguas originais (Hebraico, Aramaico e Grego Koiné), história do Oriente Próximo, contexto cultural do século I e hermenêutica reformada.
+
+Instruções de Estilo e Resposta:
+- Linguagem pastoral, didática, acolhedora, respeitosa e clara em Português do Brasil.
+- Evite jargões desnecessários, mas explique com precisão palavras originais quando relevante.
+- Mantenha SEMPRE o foco na Pessoa e Obra de Jesus Cristo (Cristocentrismo).
+- Sempre inclua: 1. Contexto bíblico/histórico, 2. Análise do texto/palavra original (se aplicável), 3. Como o assunto aponta para Cristo, 4. Aplicação prática para a vida espiritual do leitor.`;
+
+      // Build conversation or single prompt
+      const prompt = `Pergunta do leitor da Bíblia: "${message}"`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.6-flash',
+        contents: prompt,
+        config: {
+          systemInstruction,
+          temperature: 0.7,
+        },
+      });
+
+      const replyText = response.text || 'Não foi possível gerar uma resposta teológica no momento.';
+      res.json({ success: true, reply: replyText });
+    } catch (error: any) {
+      console.error('Erro no assistente teológico:', error);
+      res.status(500).json({
+        error: error.message || 'Erro ao processar consulta teológica.',
+        details: 'Verifique se a chave GEMINI_API_KEY está configurada no painel de Segredos.',
+      });
+    }
+  });
+
+  // AI Verse Exegesis & Explanation Endpoint
+  app.post('/api/theology/verse-explain', async (req, res) => {
+    try {
+      const { bookName, chapter, verse, verseText } = req.body;
+      const ai = getAiClient();
+
+      const prompt = `Forneça um estudo exegético e devocional profundo do versículo ${bookName} ${chapter}:${verse}:
+"${verseText}"
+
+Estruture a resposta em 4 tópicos claros com marcação Markdown:
+1. **Contexto Histórico e Literário**: Quem escreveu, para quem e em que momento.
+2. **Estudo de Palavras Originais**: Palavras-chave em Hebraico/Grego e seus significados lexicais ricos.
+3. **Cristocentrismo**: Como este versículo se conecta ao plano de salvação em Jesus Cristo.
+4. **Aplicação Prática**: Como o cristão de hoje deve viver esta verdade no cotidiano.`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.6-flash',
+        contents: prompt,
+        config: {
+          systemInstruction: 'Você é um expositor bíblico erudito e pastoral focado no aplicativo Jornada da Bíblia.',
+        },
+      });
+
+      res.json({ success: true, explanation: response.text });
+    } catch (error: any) {
+      console.error('Erro na exegese de versículo:', error);
+      res.status(500).json({ error: error.message || 'Erro ao gerar exegese.' });
+    }
+  });
+
+  // AI Artistic Illustration Generator Endpoint
+  app.post('/api/theology/generate-illustration', async (req, res) => {
+    try {
+      const { bookId, chapter, style } = req.body;
+      if (!bookId || !chapter) {
+        res.status(400).json({ error: 'Livro e capítulo são obrigatórios.' });
+        return;
+      }
+
+      const ai = getAiClient();
+      const styleName = style || 'Pintura Clássica a Óleo';
+
+      // 1. Generate visual concept metadata using gemini-3.6-flash
+      const promptText = `Crie o conceito de ilustração artística para o livro da Bíblia "${bookId}", capítulo ${chapter} no estilo "${styleName}".
+Forneça detalhes teológicos profundos de como os elementos visuais simbolizam a obra redentora de Deus em Cristo Jesus.`;
+
+      const metadataResponse = await ai.models.generateContent({
+        model: 'gemini-3.6-flash',
+        contents: promptText,
+        config: {
+          systemInstruction: 'Você é um curador de arte sacra, teólogo e exégeta especializado em conceber imagens com alta profundidade simbólica e bíblica baseadas em passagens bíblicas. Suas respostas devem ser exclusivamente em formato JSON válido.',
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              englishArtPrompt: {
+                type: Type.STRING,
+                description: 'A detailed, poetic and descriptive single-sentence image generation prompt in English, describing the visual setup, lighting, and elements, optimized for an AI image generator (e.g. Imagen 3). Mention the specific art style requested. Do not include text, signature or watermarks.'
+              },
+              portugueseTitle: {
+                type: Type.STRING,
+                description: 'A beautiful, majestic title in Portuguese for this artwork.'
+              },
+              portugueseArtPromptDesc: {
+                type: Type.STRING,
+                description: 'A poetic and descriptive summary in Portuguese of the artistic scene we are generating.'
+              },
+              theologicalMeaning: {
+                type: Type.STRING,
+                description: 'A deep, 2-3 sentence theological exegesis of the visual elements, explaining how the scenery, colors, or subjects symbolize God\'s attributes or point directly to Christ Jesus (Christocentrism).'
+              },
+              unsplashSearchKeywords: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+                description: '3 to 4 precise English nouns for finding a high-quality atmospheric Unsplash photo matching this event (e.g. ["shepherd", "pasture", "glowing-light"]).'
+              }
+            },
+            required: ['englishArtPrompt', 'portugueseTitle', 'portugueseArtPromptDesc', 'theologicalMeaning', 'unsplashSearchKeywords']
+          }
+        }
+      });
+
+      const metadata = JSON.parse(metadataResponse.text || '{}');
+
+      // 2. Try to generate real image using gemini-3.1-flash-lite-image
+      let imageBase64: string | null = null;
+      let usedRealGenerator = false;
+
+      try {
+        const imageGenResponse = await ai.models.generateContent({
+          model: 'gemini-3.1-flash-lite-image',
+          contents: {
+            parts: [
+              {
+                text: metadata.englishArtPrompt || `A beautiful religious illustration of bible book ${bookId} chapter ${chapter} in ${styleName} style, highly detailed.`
+              }
+            ]
+          },
+          config: {
+            imageConfig: {
+              aspectRatio: '16:9',
+            }
+          }
+        });
+
+        if (imageGenResponse.candidates?.[0]?.content?.parts) {
+          for (const part of imageGenResponse.candidates[0].content.parts) {
+            if (part.inlineData) {
+              imageBase64 = `data:image/png;base64,${part.inlineData.data}`;
+              usedRealGenerator = true;
+              break;
+            }
+          }
+        }
+      } catch (imageError: any) {
+        console.warn('Real image generator failed or quota exceeded, falling back to dynamic Unsplash visual asset:', imageError.message);
+      }
+
+      // If real generator wasn't successful, build a beautiful Unsplash fallback URL
+      let finalImageUrl = imageBase64;
+      if (!finalImageUrl) {
+        const keywords = (metadata.unsplashSearchKeywords || ['bible', 'spiritual', 'light']).join(',');
+        // We can append a random key or use a deterministic seed based on book and chapter to fetch a consistent image
+        const seed = `${bookId.toLowerCase()}-${chapter}`;
+        finalImageUrl = `https://images.unsplash.com/featured/800x450/?${encodeURIComponent(keywords)}&sig=${encodeURIComponent(seed)}`;
+      }
+
+      res.json({
+        success: true,
+        title: metadata.portugueseTitle || `${bookId} ${chapter}`,
+        artPromptDesc: metadata.portugueseArtPromptDesc || 'Ilustração artística inspiradora baseada na passagem bíblica.',
+        theologicalMeaning: metadata.theologicalMeaning || 'Meditação espiritual e simbólica sobre a revelação divina na passagem.',
+        imageUrl: finalImageUrl,
+        englishPrompt: metadata.englishArtPrompt,
+        usedRealGenerator,
+        style: styleName
+      });
+
+    } catch (error: any) {
+      console.error('Erro ao gerar ilustração do capítulo:', error);
+      res.status(500).json({
+        error: error.message || 'Erro ao gerar ilustração artística do capítulo.',
+        details: 'Verifique se a chave GEMINI_API_KEY está configurada no painel de Segredos.'
+      });
+    }
+  });
+
+  // Vite Middleware integration for development mode vs Production static serving
+  if (process.env.NODE_ENV !== 'production') {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  }
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[Jornada da Bíblia] Servidor rodando em http://0.0.0.0:${PORT}`);
+  });
+}
+
+startServer();

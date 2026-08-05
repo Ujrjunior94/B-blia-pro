@@ -1,0 +1,6 @@
+{
+  "name": "Jornada da Bíblia",
+  "description": "Aplicativo bíblico completo offline com leitor interlinear, números de Strong, texto em grego e hebraico, guia teológico dos 66 livros e assistente teológico.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
