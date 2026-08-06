@@ -222,7 +222,48 @@ export class LocalBibleDatabase {
     }
   }
 
-  // CLEAR ALL USER DATA FOR CLEAN SLATE
+  async getCachedChapterCount(version: string): Promise<number> {
+    try {
+      const db = await this.getDB();
+      return new Promise((resolve) => {
+        const tx = db.transaction('verses', 'readonly');
+        const store = tx.objectStore('verses');
+        const index = store.index('version_book_chap');
+        // Count distinct chapters cached by counting entries
+        const req = index.count(IDBKeyRange.bound([version, '', 0], [version, '\uffff', 9999]));
+        req.onsuccess = () => resolve(req.result || 0);
+        req.onerror = () => resolve(0);
+      });
+    } catch {
+      return 0;
+    }
+  }
+
+  async isVersionDownloaded(version: string): Promise<boolean> {
+    const count = await this.getCachedChapterCount(version);
+    return count > 50; // consider downloaded if significant chapters cached
+  }
+
+  async deleteCachedVersion(version: string): Promise<void> {
+    try {
+      const db = await this.getDB();
+      const tx = db.transaction('verses', 'readwrite');
+      const store = tx.objectStore('verses');
+      const index = store.index('version_book_chap');
+      const req = index.openCursor(IDBKeyRange.bound([version, '', 0], [version, '\uffff', 9999]));
+      req.onsuccess = (e: any) => {
+        const cursor = e.target.result;
+        if (cursor) {
+          cursor.delete();
+          cursor.continue();
+        }
+      };
+    } catch (e) {
+      console.error('Error deleting cached version', e);
+    }
+  }
+
+  // CLEAR ALL USER DATA & PROGRESS FOR CLEAN SLATE
   async clearUserData(): Promise<void> {
     try {
       const db = await this.getDB();
@@ -232,6 +273,9 @@ export class LocalBibleDatabase {
         tx.objectStore(storeName).clear();
       }
       localStorage.removeItem('jornada_desafio_365_progress');
+      localStorage.removeItem('jornada_custom_reading_plans');
+      localStorage.removeItem('jornada_user_settings');
+      localStorage.removeItem('jornada_reading_streaks');
     } catch (e) {
       console.error('Error clearing user data', e);
     }

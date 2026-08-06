@@ -141,6 +141,30 @@ export interface ReadingPlan {
   days: ReadingPlanDay[];
 }
 
+export interface CustomPlanStage {
+  id: string;
+  bookId: string;
+  bookName: string;
+  totalChapters: number;
+  durationDays: number;
+  targetDate?: string;
+  startDayOffset: number;
+  endDayOffset: number;
+}
+
+export interface CustomReadingPlan {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: string;
+  targetEndDate?: string;
+  totalDurationDays: number;
+  selectedBookIds: string[];
+  stages: CustomPlanStage[];
+  days: ReadingPlanDay[];
+  completedDays: number[];
+}
+
 export interface UserPlanProgress {
   planId: string;
   completedDays: number[];
@@ -152,12 +176,16 @@ export interface ReaderSettings {
   version: BibleVersionCode;
   fontSize: number; // e.g. 16, 18, 20, 22, 24
   fontFamily: 'serif' | 'sans' | 'mono';
-  theme: 'light' | 'dark' | 'sepia' | 'parchment';
+  theme: 'light' | 'dark' | 'sepia' | 'parchment' | 'manuscript' | 'tora';
   lineHeight: 'normal' | 'relaxed' | 'loose';
   showVerseNumbers: boolean;
-  interlinearMode: boolean;
-  autoPlayAudio: boolean;
-  continuousReading: boolean;
+  interlinearMode?: boolean;
+  autoPlayAudio?: boolean;
+  continuousReading?: boolean;
+  focusMode?: boolean;
+  showStrong?: boolean;
+  showInterlinear?: boolean;
+  audioSpeed?: number;
 }
 
 export interface UserProgress {

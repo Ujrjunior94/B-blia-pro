@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookOpen, Calendar, ChevronRight, Bell, Sun, BookMarked, Award, ArrowRight, Flame, Sparkles, Book as BookIcon, Search, ShieldCheck } from 'lucide-react';
 import { BibleBook } from '../types';
 import { useTheme } from '../styles/themeConstants';
+import { auth, onAuthStateChanged, db, doc, getDoc } from '../services/firebase';
 
 interface HomeViewProps {
   currentBook: BibleBook;
@@ -25,6 +26,41 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onGoToOriginalText,
 }) => {
   const { theme } = useTheme();
+  const [userName, setUserName] = useState<string>('Visitante');
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        if (user.isAnonymous) {
+          setUserName('Convidado');
+          return;
+        }
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists() && userDoc.data().displayName) {
+            setUserName(userDoc.data().displayName);
+            return;
+          }
+        } catch (e) {
+          console.error('Error fetching profile for greeting:', e);
+        }
+
+        if (user.displayName) {
+          setUserName(user.displayName);
+        } else if (user.email) {
+          const rawName = user.email.split('@')[0];
+          const formatted = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+          setUserName(formatted);
+        } else {
+          setUserName('Discípulo');
+        }
+      } else {
+        setUserName('Visitante');
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
   
   const monthsPt = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -40,7 +76,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           <div className="flex items-center gap-2.5 text-theme-accent">
             <Sun className="w-5 h-5 animate-spin-slow" />
             <h2 className="text-2xl md:text-3xl font-classic font-bold text-theme-primary">
-              Graça e Paz, João
+              Graça e Paz, {userName}
             </h2>
           </div>
           <p className="text-xs sm:text-sm text-theme-secondary font-manuscript italic">

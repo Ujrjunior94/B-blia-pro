@@ -14,7 +14,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
  */
 
 // Tipos de Temas suportados pelo sistema
-export type ThemeType = 'light' | 'dark' | 'parchment';
+export type ThemeType = 'light' | 'dark' | 'sepia' | 'parchment' | 'manuscript' | 'tora';
 
 export interface ThemeConfig {
   id: ThemeType;
@@ -69,6 +69,23 @@ export const THEME_MODES: Record<ThemeType, ThemeConfig> = {
       accentBg: 'rgba(212, 162, 76, 0.15)',
     }
   },
+  sepia: {
+    id: 'sepia',
+    name: 'Sépia Clássica',
+    className: '',
+    variables: {
+      bgApp: '#F4ECD8',
+      bgCard: '#FFFDF8',
+      bgCardHover: '#EAE0C8',
+      textPrimary: '#3D2C1E',
+      textSecondary: '#5C4838',
+      textMuted: '#8C7765',
+      borderColor: '#D8C8B0',
+      accentPrimary: '#8B5A2B',
+      accentHover: '#6B421E',
+      accentBg: 'rgba(139, 90, 43, 0.1)',
+    }
+  },
   parchment: {
     id: 'parchment',
     name: 'Manuscrito Pergaminho',
@@ -84,6 +101,40 @@ export const THEME_MODES: Record<ThemeType, ThemeConfig> = {
       accentPrimary: '#3E5641', // Sacred dark green (as main theme primary)
       accentHover: '#2F4231',
       accentBg: 'rgba(62, 86, 65, 0.08)',
+    }
+  },
+  manuscript: {
+    id: 'manuscript',
+    name: 'Manuscrito Antigo',
+    className: '',
+    variables: {
+      bgApp: '#F2E8D5',
+      bgCard: '#FFFDF8',
+      bgCardHover: '#E5D6BD',
+      textPrimary: '#2B1E12',
+      textSecondary: '#4A3728',
+      textMuted: '#7A624E',
+      borderColor: '#8B5A2B',
+      accentPrimary: '#8B1A10',
+      accentHover: '#6B120B',
+      accentBg: 'rgba(139, 26, 16, 0.1)',
+    }
+  },
+  tora: {
+    id: 'tora',
+    name: 'Rolos da Torá',
+    className: '',
+    variables: {
+      bgApp: '#FAF3E0',
+      bgCard: '#FFFDF8',
+      bgCardHover: '#F0E4C8',
+      textPrimary: '#1E1711',
+      textSecondary: '#3B2D22',
+      textMuted: '#6E5847',
+      borderColor: '#7B3F00',
+      accentPrimary: '#3D1E03',
+      accentHover: '#231001',
+      accentBg: 'rgba(123, 63, 0, 0.1)',
     }
   }
 };
@@ -207,8 +258,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const root = document.documentElement;
     root.classList.remove('dark', 'parchment-theme');
 
-    const config = THEME_MODES[theme];
-    if (config.className) {
+    const config = THEME_MODES[theme] || THEME_MODES.light;
+    if (config && config.className) {
       root.classList.add(config.className);
     }
   }, [theme]);
@@ -220,7 +271,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const isDark = theme === 'dark';
   const isParchment = theme === 'parchment';
   const isLight = theme === 'light';
-  const activeConfig = THEME_MODES[theme];
+  const activeConfig = THEME_MODES[theme] || THEME_MODES.light;
 
   return (
     <ThemeContext.Provider

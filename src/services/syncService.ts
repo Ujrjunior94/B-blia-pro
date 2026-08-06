@@ -261,3 +261,87 @@ export async function syncUserData(userId: string): Promise<SyncStats> {
 
   return stats;
 }
+
+/**
+ * Resets Desafio 365 Days reading plan progress locally and in Firebase.
+ */
+export async function resetDesafioProgressInApp(userId?: string): Promise<void> {
+  const emptyDesafio = { completedDays: [], weeklyNotes: {}, weeklyPrayers: {} };
+  localStorage.setItem('jornada_desafio_365_progress', JSON.stringify(emptyDesafio));
+
+  if (userId) {
+    try {
+      const desafioDocRef = doc(db, 'desafioProgress', userId);
+      await setDoc(desafioDocRef, {
+        ...emptyDesafio,
+        userId,
+        updatedAt: new Date().toISOString()
+      });
+
+      const userProgressRef = doc(db, 'userProgress', userId);
+      await setDoc(userProgressRef, {
+        userId,
+        desafioCompletedDays: [],
+        chaptersReadCount: 0,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (err) {
+      console.error('Error resetting Desafio progress in Firebase:', err);
+    }
+  }
+}
+
+/**
+ * Resets user notes, verse highlights, and bookmarks locally and in Firebase.
+ */
+export async function resetUserContentInApp(userId?: string): Promise<void> {
+  await localDB.clearUserData();
+
+  if (userId) {
+    try {
+      // Clear remote highlights
+      const hlSnap = await getDocs(query(collection(db, 'highlights'), where('userId', '==', userId)));
+      for (const d of hlSnap.docs) {
+        await deleteDoc(doc(db, 'highlights', d.id));
+      }
+      // Clear remote notes
+      const notesSnap = await getDocs(query(collection(db, 'notes'), where('userId', '==', userId)));
+      for (const d of notesSnap.docs) {
+        await deleteDoc(doc(db, 'notes', d.id));
+      }
+      // Clear remote bookmarks
+      const bmSnap = await getDocs(query(collection(db, 'bookmarks'), where('userId', '==', userId)));
+      for (const d of bmSnap.docs) {
+        await deleteDoc(doc(db, 'bookmarks', d.id));
+      }
+    } catch (err) {
+      console.error('Error resetting user content in Firebase:', err);
+    }
+  }
+}
+
+/**
+ * Resets monthly devotionals and favorite bible characters.
+ */
+export async function resetDevotionalsAndFavoritesInApp(): Promise<void> {
+  localStorage.removeItem('jornada_monthly_devotionals_v1');
+  localStorage.removeItem('jornada_biblia_fav_characters');
+}
+
+/**
+ * Performs a complete factory reset of all user progress, content, and local cache.
+ */
+export async function fullFactoryResetInApp(userId?: string): Promise<void> {
+  await resetDesafioProgressInApp(userId);
+  await resetUserContentInApp(userId);
+  await resetDevotionalsAndFavoritesInApp();
+
+  if (userId) {
+    try {
+      await initializeUserProgressInFirebase(userId);
+    } catch (err) {
+      console.error('Error in factory reset Firebase sync:', err);
+    }
+  }
+}
+

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Sparkles, BookMarked, Calendar, Search, Bot, Download, Moon, Sun, Layers, ShieldCheck, Book, Users, Compass, Flame, Scroll, User, LogIn } from 'lucide-react';
+import { BookOpen, Sparkles, BookMarked, Calendar, Search, Bot, Download, Moon, Sun, Layers, ShieldCheck, Book, Users, Compass, Flame, Scroll, User, LogIn, Settings } from 'lucide-react';
 import { ReaderSettings } from '../types';
-import { auth, onAuthStateChanged } from '../services/firebase';
+import { auth, onAuthStateChanged, db, doc, getDoc } from '../services/firebase';
+import { SettingsModal } from './SettingsModal';
 
 interface HeaderProps {
   activeTab: 'home' | 'reader' | 'interlinear' | 'dictionary' | 'characters' | 'study' | 'challenge' | 'notes' | 'ai' | 'devotional';
@@ -25,10 +26,31 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenOfflineManager,
 }) => {
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [registeredName, setRegisteredName] = useState<string>('');
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
+      if (user && !user.isAnonymous) {
+        try {
+          const uDoc = await getDoc(doc(db, 'users', user.uid));
+          if (uDoc.exists() && uDoc.data().displayName) {
+            setRegisteredName(uDoc.data().displayName);
+            return;
+          }
+        } catch (err) {
+          console.error('Error fetching user profile in header:', err);
+        }
+        if (user.displayName) {
+          setRegisteredName(user.displayName);
+        } else if (user.email) {
+          const raw = user.email.split('@')[0];
+          setRegisteredName(raw.charAt(0).toUpperCase() + raw.slice(1));
+        }
+      } else {
+        setRegisteredName('');
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -39,8 +61,9 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   const getUserInitials = () => {
-    if (currentUser?.displayName) {
-      return currentUser.displayName.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase();
+    const nameToUse = registeredName || currentUser?.displayName;
+    if (nameToUse) {
+      return nameToUse.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase();
     }
     if (currentUser?.email) {
       return currentUser.email.substring(0, 2).toUpperCase();
@@ -87,17 +110,26 @@ export const Header: React.FC<HeaderProps> = ({
           {/* 100% Offline Badge */}
           <button
             onClick={onOpenOfflineManager}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-sans font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/15 transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-sans font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/15 transition-all cursor-pointer"
             title="Download de versões para uso 100% offline"
           >
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span className="hidden md:inline">100% Offline</span>
           </button>
 
+          {/* Settings Button */}
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            className="p-2.5 rounded-xl text-theme-secondary hover:text-theme-primary bg-theme-app border border-theme hover:bg-theme-card-hover transition-colors shadow-3xs cursor-pointer"
+            title="Configurações & Zerar Progresso"
+          >
+            <Settings className="w-4 h-4 text-theme-accent" />
+          </button>
+
           {/* Scriptorium Theme Cycle Button */}
           <button
             onClick={toggleTheme}
-            className="p-2.5 rounded-xl text-theme-secondary hover:text-theme-primary bg-theme-app border border-theme hover:bg-theme-card-hover transition-colors shadow-3xs"
+            className="p-2.5 rounded-xl text-theme-secondary hover:text-theme-primary bg-theme-app border border-theme hover:bg-theme-card-hover transition-colors shadow-3xs cursor-pointer"
             title={`Alternar tema scriptorium (Atual: ${settings.theme})`}
           >
             {settings.theme === 'dark' ? (
@@ -115,7 +147,7 @@ export const Header: React.FC<HeaderProps> = ({
               title="Acessar Perfil & Sincronização"
             >
               <span className="text-[11px] font-sans font-extrabold tracking-tight hidden sm:inline text-theme-accent">
-                {currentUser.isAnonymous ? 'Convidado' : (currentUser.displayName || currentUser.email?.split('@')[0])}
+                {currentUser.isAnonymous ? 'Convidado' : (registeredName || currentUser.displayName || currentUser.email?.split('@')[0])}
               </span>
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#3E5641] to-[#2D3E30] flex items-center justify-center text-white border border-[#D4A24C] font-serif font-extrabold text-[11px]">
                 {getUserInitials()}
@@ -166,6 +198,16 @@ export const Header: React.FC<HeaderProps> = ({
           );
         })}
       </nav>
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        settings={settings}
+        setSettings={setSettings}
+        onOpenOfflineManager={onOpenOfflineManager}
+      />
     </header>
   );
 };
+

@@ -23,10 +23,24 @@ import {
   ChevronUp,
   Cloud,
   CloudCheck,
-  Trash2
+  Trash2,
+  Maximize2,
+  Minimize2,
+  Eye,
+  Scroll,
+  Feather,
+  BookOpen,
+  Sun,
+  Moon,
+  Layers,
+  Play,
+  Pause,
+  ChevronsDown,
+  FastForward,
+  Gauge
 } from 'lucide-react';
 import { BibleBook, BibleVersionCode, ReaderSettings, UserBookmark, UserHighlight, UserNote, Verse } from '../types';
-import { fetchChapterVerses } from '../services/bibleService';
+import { fetchChapterVerses, BIBLE_VERSIONS } from '../services/bibleService';
 import { localDB } from '../utils/db';
 import { VerseShareModal } from './VerseShareModal';
 import { saveHighlight, removeHighlight, subscribeUserHighlights } from '../services/highlightService';
@@ -101,6 +115,10 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   const [shareVerseModal, setShareVerseModal] = useState<Verse | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isFirebaseSynced, setIsFirebaseSynced] = useState<boolean>(false);
+  const [showVersionModal, setShowVersionModal] = useState<boolean>(false);
+  const [showAppearanceModal, setShowAppearanceModal] = useState<boolean>(false);
+  const [isAutoScrolling, setIsAutoScrolling] = useState<boolean>(false);
+  const [autoScrollSpeed, setAutoScrollSpeed] = useState<number>(2); // 1 to 5 speed level
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -108,6 +126,25 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
       setToastMessage(null);
     }, 3200);
   };
+
+  // Auto-scroll smooth mechanism
+  useEffect(() => {
+    if (!isAutoScrolling) return;
+
+    const speedMs = [65, 42, 26, 16, 9][autoScrollSpeed - 1] || 42;
+
+    const interval = setInterval(() => {
+      const isAtBottom = (window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 20);
+      if (isAtBottom) {
+        setIsAutoScrolling(false);
+        showToast('Rolagem automática concluída no final do capítulo');
+        return;
+      }
+      window.scrollBy({ top: 1, behavior: 'auto' });
+    }, speedMs);
+
+    return () => clearInterval(interval);
+  }, [isAutoScrolling, autoScrollSpeed]);
 
   // Subscribe to realtime Firebase highlights when authenticated
   useEffect(() => {
@@ -372,8 +409,83 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
       case 'ARC': return 'Almeida Revista e Corrigida (ARC)';
       case 'NAA': return 'Nova Almeida Atualizada (NAA)';
       case 'NVI': return 'Nova Versão Internacional (NVI)';
+      case 'INTERLINEAR': return 'Hebraico / Grego Interlinear';
       default: return 'Almeida Revista e Corrigida (ARC)';
     }
+  };
+
+  const getThemeContainerClass = (theme: ReaderSettings['theme']) => {
+    switch (theme) {
+      case 'manuscript':
+        return 'bg-[#F2E8D5] text-[#2B1E12] border-2 border-[#8B5A2B]/40 shadow-md font-serif relative overflow-hidden';
+      case 'tora':
+        return 'bg-[#FAF3E0] text-[#1E1711] border-x-4 md:border-x-8 border-x-[#7B3F00] shadow-xl font-serif relative overflow-hidden';
+      case 'sepia':
+        return 'bg-[#F4ECD8] text-[#3D2C1E] border border-[#D8C8B0] font-serif';
+      case 'dark':
+        return 'bg-[#1C1A18] text-[#E0D8C8] border border-stone-800 font-serif';
+      case 'light':
+      default:
+        return 'bg-[#FFFDF8] dark:bg-[#1C1A18] text-[#1F1B16] dark:text-stone-100 border border-[#E7DECF] dark:border-stone-800 font-serif';
+    }
+  };
+
+  const renderThemeHeaders = (theme: ReaderSettings['theme']) => {
+    if (theme === 'tora') {
+      return (
+        <div className="space-y-3 mb-6">
+          <div className="w-full h-5 rounded-full bg-gradient-to-r from-[#3D1E03] via-[#7B3F00] to-[#3D1E03] border-2 border-[#C59B27] shadow-md flex items-center justify-between px-3">
+            <div className="w-3.5 h-3.5 rounded-full bg-amber-400 border border-amber-700 shadow-inner" />
+            <span className="text-[9px] font-sans font-bold tracking-widest text-amber-200 uppercase">
+              ‎מגילת תורה • MEGILLAT TORAH
+            </span>
+            <div className="w-3.5 h-3.5 rounded-full bg-amber-400 border border-amber-700 shadow-inner" />
+          </div>
+
+          <div className="text-center space-y-1 pt-1 border-b border-dashed border-[#7B3F00]/30 pb-3">
+            <span className="text-[11px] font-sans font-extrabold uppercase tracking-widest text-[#7B3F00]">
+              ‎תּוֹרַת יְהוָה תְּמִימָה — PERGAMINHO SACRO‎
+            </span>
+            <h3 className="text-xl md:text-2xl font-serif font-extrabold text-[#3D1E03]">
+              {currentBook.name} • {currentChapter}
+            </h3>
+          </div>
+        </div>
+      );
+    }
+
+    if (theme === 'manuscript') {
+      return (
+        <div className="text-center py-3 border-b-2 border-[#8B1A10]/30 mb-6 space-y-1">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#8B1A10]/10 text-[#8B1A10] font-sans text-[10px] font-extrabold uppercase tracking-widest">
+            <Scroll className="w-3.5 h-3.5" />
+            <span>Codex Scriptura • Manuscrito Antigo</span>
+          </div>
+          <h3 className="text-2xl md:text-3xl font-serif font-black text-[#2B1E12] tracking-tight">
+            {currentBook.name} — Capitulum {currentChapter}
+          </h3>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  const renderThemeFooters = (theme: ReaderSettings['theme']) => {
+    if (theme === 'tora') {
+      return (
+        <div className="mt-8 pt-4 border-t border-dashed border-[#7B3F00]/30 space-y-3">
+          <div className="w-full h-5 rounded-full bg-gradient-to-r from-[#3D1E03] via-[#7B3F00] to-[#3D1E03] border-2 border-[#C59B27] shadow-md flex items-center justify-between px-3">
+            <div className="w-3.5 h-3.5 rounded-full bg-amber-400 border border-amber-700 shadow-inner" />
+            <span className="text-[9px] font-sans font-bold tracking-widest text-amber-200 uppercase">
+              ‎כָּתוּב כַּהֲלָכָה • SEFER TORAH‎
+            </span>
+            <div className="w-3.5 h-3.5 rounded-full bg-amber-400 border border-amber-700 shadow-inner" />
+          </div>
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
@@ -407,7 +519,8 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
           </button>
           <button 
             className="p-2 rounded-full hover:bg-stone-200/50 text-[#1F1B16] dark:text-stone-300 transition-colors cursor-pointer"
-            onClick={() => setSettings(prev => ({ ...prev, fontSize: prev.fontSize === 18 ? 16 : 18 }))}
+            onClick={() => setShowAppearanceModal(true)}
+            title="Aparência e Configurações"
           >
             <Settings className="w-4 h-4" />
           </button>
@@ -420,20 +533,107 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
         </div>
       </div>
 
-      {/* 2. Sub-Header: Version Label & Font Size Adjustment Slider */}
+      {/* 2. Sub-Header: Quick Version Switcher, Focus Mode & Theme Selector */}
       <div className="p-4 rounded-3xl bg-[#FFFDF8] dark:bg-[#1C1A18] border border-[#E7DECF] dark:border-stone-800 shadow-2xs space-y-3.5">
-        <div className="flex items-center justify-between text-[11px] font-sans font-bold uppercase tracking-wider text-[#5F5A52]">
-          <span>Tradução Ativa</span>
-          <span className="text-[#3E5641] dark:text-[#D4A24C]">
-            {getFullVersionName(settings.version)}
-          </span>
+        
+        {/* Version Switcher Bar */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-[11px] font-sans font-bold uppercase tracking-wider text-[#5F5A52]">
+            <span>Tradução da Bíblia</span>
+            <button
+              onClick={() => setShowVersionModal(true)}
+              className="text-[#3E5641] dark:text-[#D4A24C] hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <BookOpen className="w-3 h-3" />
+              <span>Ver todas</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {[
+              { code: 'ARC', name: 'Almeida Corrigida' },
+              { code: 'NAA', name: 'Nova Almeida' },
+              { code: 'NVI', name: 'Nova Versão Int.' },
+              { code: 'INTERLINEAR', name: 'Hebraico / Grego' },
+            ].map((v) => {
+              const isSelected = settings.version === v.code;
+              return (
+                <button
+                  key={v.code}
+                  onClick={() => {
+                    setSettings((prev) => ({ ...prev, version: v.code as any }));
+                    showToast(`Tradução alterada para ${v.name}`);
+                  }}
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-sans font-extrabold uppercase transition-all shrink-0 cursor-pointer ${
+                    isSelected
+                      ? 'bg-[#3E5641] text-amber-50 shadow-xs'
+                      : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-300 border border-stone-200/60 dark:border-stone-800 hover:border-[#3E5641]'
+                  }`}
+                >
+                  {v.code}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Focus Mode & Theme Selector Buttons */}
+        <div className="pt-2 border-t border-stone-200/60 dark:border-stone-800 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-sans font-extrabold text-stone-400 uppercase tracking-wider">
+              Aparência do Leitor
+            </span>
+
+            {/* Focus Mode Toggle Button */}
+            <button
+              onClick={() => setSettings((prev) => ({ ...prev, focusMode: !prev.focusMode }))}
+              className={`px-3 py-1 rounded-full text-[11px] font-sans font-extrabold flex items-center gap-1.5 transition-all cursor-pointer ${
+                settings.focusMode
+                  ? 'bg-rose-600 text-white shadow-xs'
+                  : 'bg-emerald-800/10 dark:bg-emerald-400/10 text-emerald-800 dark:text-emerald-300 border border-emerald-700/20 hover:bg-emerald-800/20'
+              }`}
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Modo Foco</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {[
+              { id: 'light', name: 'Claro', icon: '☀️' },
+              { id: 'dark', name: 'Escuro', icon: '🌙' },
+              { id: 'sepia', name: 'Sépia', icon: '📜' },
+              { id: 'manuscript', name: 'Manuscrito', icon: '🏛️' },
+              { id: 'tora', name: 'Torá', icon: '🕎' },
+            ].map((th) => {
+              const isSelected = settings.theme === th.id;
+              return (
+                <button
+                  key={th.id}
+                  onClick={() => {
+                    setSettings((prev) => ({ ...prev, theme: th.id as any }));
+                    showToast(`Tema alterado para ${th.name}`);
+                  }}
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-serif font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1 ${
+                    isSelected
+                      ? 'bg-[#D4A24C] text-[#1F1B16] shadow-xs font-extrabold'
+                      : 'bg-stone-100 dark:bg-stone-850 text-stone-600 dark:text-stone-300 border border-stone-200/60 dark:border-stone-800 hover:border-[#D4A24C]'
+                  }`}
+                >
+                  <span>{th.icon}</span>
+                  <span>{th.name}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Font Slider Control */}
-        <div className="space-y-1">
-          <span className="text-[10px] font-sans font-bold text-stone-400 block uppercase">
-            Tamanho da fonte
-          </span>
+        <div className="pt-2 border-t border-stone-200/60 dark:border-stone-800 space-y-1">
+          <div className="flex items-center justify-between text-[10px] font-sans font-bold text-stone-400 uppercase">
+            <span>Tamanho da fonte</span>
+            <span>{settings.fontSize}px</span>
+          </div>
           <div className="flex items-center gap-3">
             <span className="text-xs font-serif text-stone-400">A</span>
             <input
@@ -445,6 +645,63 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
               className="flex-1 accent-[#3E5641] h-1 bg-stone-200 dark:bg-stone-800 rounded-lg cursor-pointer"
             />
             <span className="text-lg font-serif text-stone-600 font-bold">A</span>
+          </div>
+        </div>
+
+        {/* Auto-Scroll Control Section */}
+        <div className="pt-2 border-t border-stone-200/60 dark:border-stone-800 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <ChevronsDown className={`w-3.5 h-3.5 ${isAutoScrolling ? 'text-amber-500 animate-pulse' : 'text-stone-400'}`} />
+              <span className="text-[10px] font-sans font-extrabold text-stone-400 uppercase tracking-wider">
+                Rolagem Automática
+              </span>
+            </div>
+
+            <button
+              onClick={() => {
+                setIsAutoScrolling(!isAutoScrolling);
+                showToast(isAutoScrolling ? 'Rolagem automática pausada' : 'Rolagem automática iniciada');
+              }}
+              className={`px-3 py-1 rounded-full text-[11px] font-sans font-extrabold flex items-center gap-1.5 transition-all cursor-pointer ${
+                isAutoScrolling
+                  ? 'bg-amber-500 text-stone-950 shadow-xs'
+                  : 'bg-stone-100 dark:bg-stone-850 text-stone-700 dark:text-stone-200 border border-stone-200/60 dark:border-stone-800 hover:border-[#3E5641]'
+              }`}
+            >
+              {isAutoScrolling ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+              <span>{isAutoScrolling ? 'Pausar' : 'Iniciar'}</span>
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between gap-2 bg-stone-50 dark:bg-stone-900/60 p-2 rounded-2xl border border-stone-200/50 dark:border-stone-800/60">
+            <span className="text-[10px] font-sans font-bold text-stone-500 uppercase pl-1">
+              Velocidade:
+            </span>
+            <div className="flex items-center gap-1">
+              {[
+                { level: 1, label: '1x' },
+                { level: 2, label: '2x' },
+                { level: 3, label: '3x' },
+                { level: 4, label: '4x' },
+                { level: 5, label: '5x' },
+              ].map((s) => (
+                <button
+                  key={s.level}
+                  onClick={() => {
+                    setAutoScrollSpeed(s.level);
+                    showToast(`Velocidade de rolagem: ${s.label}`);
+                  }}
+                  className={`px-2.5 py-1 rounded-xl text-[10px] font-sans font-black transition-all cursor-pointer ${
+                    autoScrollSpeed === s.level
+                      ? 'bg-[#3E5641] text-amber-50 shadow-xs'
+                      : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100'
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -687,8 +944,11 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
           <p className="text-xs font-serif italic text-stone-500">Buscando o texto...</p>
         </div>
       ) : (
-        <div className="bg-[#FFFDF8] dark:bg-[#1C1A18] border border-[#E7DECF] dark:border-stone-800 rounded-3xl p-6 md:p-8 shadow-2xs space-y-4 font-serif">
+        <div className={`rounded-3xl p-6 md:p-8 shadow-2xs space-y-4 font-serif ${getThemeContainerClass(settings.theme)}`}>
           
+          {/* Ancient Manuscript or Torah Header */}
+          {renderThemeHeaders(settings.theme)}
+
           <div className="space-y-3.5 leading-relaxed text-justify">
             {verses.map((v) => {
               const isSelected = selectedVerse?.verse === v.verse;
@@ -703,6 +963,9 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
               );
 
               const hlColorObj = hasHighlight ? HIGHLIGHT_COLORS.find((c) => c.id === hasHighlight.color) : null;
+              const isManuscriptDropCap = settings.theme === 'manuscript' && v.verse === 1;
+              const firstChar = isManuscriptDropCap ? v.text.charAt(0) : '';
+              const restText = isManuscriptDropCap ? v.text.slice(1) : v.text;
 
               return (
                 <div
@@ -712,22 +975,39 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                     hasHighlight && hlColorObj
                       ? hlColorObj.containerStyle
                       : isSelected
-                      ? 'bg-[#E7DECF]/30'
+                      ? 'bg-[#E7DECF]/40 dark:bg-stone-800/60'
                       : ''
                   }`}
                 >
                   <div className="flex items-start gap-1">
-                    {/* Verse Number in Gold superscript */}
-                    <span className="font-serif font-extrabold text-[11px] text-[#D4A24C] mr-1.5 select-none align-super">
+                    {/* Verse Number styled according to theme */}
+                    <span className={`font-serif select-none align-super mr-1.5 ${
+                      settings.theme === 'manuscript'
+                        ? 'font-black text-xs text-[#8B1A10] dark:text-amber-500'
+                        : settings.theme === 'tora'
+                        ? 'font-black text-xs text-[#1A365D] dark:text-[#C59B27]'
+                        : 'font-extrabold text-[11px] text-[#D4A24C]'
+                    }`}>
                       {v.verse}
                     </span>
 
                     {/* Verse Content */}
                     <p
                       style={{ fontSize: `${settings.fontSize}px`, lineHeight: 1.6 }}
-                      className="text-[#1F1B16] dark:text-stone-100 font-serif leading-relaxed text-justify tracking-wide flex-1"
+                      className={`font-serif leading-relaxed text-justify tracking-wide flex-1 ${
+                        settings.theme === 'manuscript'
+                          ? 'text-[#2A1C12]'
+                          : settings.theme === 'tora'
+                          ? 'text-[#1C140E]'
+                          : 'text-[#1F1B16] dark:text-stone-100'
+                      }`}
                     >
-                      {v.text}
+                      {isManuscriptDropCap && (
+                        <span className="float-left text-3xl md:text-4xl font-serif font-black pr-2 pt-0.5 text-[#8B1A10] dark:text-amber-500 leading-none uppercase select-none drop-shadow-xs">
+                          {firstChar}
+                        </span>
+                      )}
+                      {restText}
                     </p>
 
                     {/* Right side indicators */}
@@ -837,6 +1117,9 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
             })}
           </div>
 
+          {/* Ancient Theme Footer */}
+          {renderThemeFooters(settings.theme)}
+
         </div>
       )}
 
@@ -909,6 +1192,280 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
           chapter={currentChapter}
           onClose={() => setShareVerseModal(null)}
         />
+      )}
+
+      {/* Version Selector Modal */}
+      {showVersionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/65 backdrop-blur-xs animate-fade-in">
+          <div className="w-full max-w-lg bg-[#FFFDF8] dark:bg-stone-900 border border-[#E7DECF] dark:border-stone-800 rounded-3xl p-6 space-y-4 shadow-2xl text-[#1F1B16] dark:text-stone-200">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E7DECF] dark:border-stone-800">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-[#D4A24C]" />
+                <h3 className="font-serif font-extrabold text-base md:text-lg">
+                  Versões & Traduções da Bíblia
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowVersionModal(false)}
+                className="p-1.5 rounded-full hover:bg-stone-200 dark:hover:bg-stone-800 text-stone-500 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs font-serif text-stone-500 dark:text-stone-400">
+              Selecione a versão da Bíblia desejada para leitura e estudo exegético comparativo:
+            </p>
+
+            <div className="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1">
+              {BIBLE_VERSIONS.map((ver) => {
+                const isCurrent = settings.version === ver.code;
+                return (
+                  <button
+                    key={ver.code}
+                    onClick={() => {
+                      setSettings((prev) => ({ ...prev, version: ver.code }));
+                      setShowVersionModal(false);
+                      showToast(`Versão alterada para ${ver.name} (${ver.code})`);
+                    }}
+                    className={`w-full p-4 rounded-2xl text-left border transition-all cursor-pointer flex items-start justify-between gap-3 ${
+                      isCurrent
+                        ? 'bg-[#3E5641]/10 border-[#3E5641] dark:border-[#D4A24C] shadow-sm'
+                        : 'bg-[#FFFDF8] dark:bg-stone-850 border-[#E7DECF] dark:border-stone-800 hover:border-[#D4A24C]'
+                    }`}
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded-md bg-[#3E5641] text-amber-50 font-sans font-black text-[10px] uppercase tracking-wider">
+                          {ver.code}
+                        </span>
+                        <h4 className="font-serif font-bold text-sm text-[#1F1B16] dark:text-amber-100">
+                          {ver.name}
+                        </h4>
+                      </div>
+                      <p className="text-xs font-serif text-stone-600 dark:text-stone-300 leading-relaxed">
+                        {ver.description}
+                      </p>
+                    </div>
+
+                    {isCurrent && (
+                      <span className="p-1 rounded-full bg-[#3E5641] text-amber-300 shrink-0 mt-1">
+                        <Check className="w-4 h-4" />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Appearance & Themes Modal */}
+      {showAppearanceModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/65 backdrop-blur-xs animate-fade-in">
+          <div className="w-full max-w-lg bg-[#FFFDF8] dark:bg-stone-900 border border-[#E7DECF] dark:border-stone-800 rounded-3xl p-6 space-y-5 shadow-2xl text-[#1F1B16] dark:text-stone-200">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E7DECF] dark:border-stone-800">
+              <div className="flex items-center gap-2">
+                <Palette className="w-5 h-5 text-[#D4A24C]" />
+                <h3 className="font-serif font-extrabold text-base md:text-lg">
+                  Aparência & Temas do Leitor
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowAppearanceModal(false)}
+                className="p-1.5 rounded-full hover:bg-stone-200 dark:hover:bg-stone-800 text-stone-500 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <span className="block text-[11px] font-sans font-extrabold uppercase tracking-wider text-stone-400">
+                Estilo Visual do Livro / Pergaminho
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {[
+                  { id: 'light', name: 'Claro Confortável', icon: '☀️', desc: 'Papel marfim clássico' },
+                  { id: 'dark', name: 'Pedra Escura', icon: '🌙', desc: 'Modo noturno repousante' },
+                  { id: 'sepia', name: 'Sépia Clássica', icon: '📜', desc: 'Tom suave de papel envelhecido' },
+                  { id: 'manuscript', name: 'Manuscrito Antigo', icon: '🏛️', desc: 'Codex sacra com capitulares' },
+                  { id: 'tora', name: 'Rolos da Torá', icon: '🕎', desc: 'Pergaminho com cilindros de madeira' },
+                ].map((th) => (
+                  <button
+                    key={th.id}
+                    onClick={() => {
+                      setSettings((prev) => ({ ...prev, theme: th.id as any }));
+                      showToast(`Aparência alterada para ${th.name}`);
+                    }}
+                    className={`p-3 rounded-2xl text-left border transition-all cursor-pointer flex items-center gap-3 ${
+                      settings.theme === th.id
+                        ? 'bg-[#3E5641]/10 border-[#3E5641] dark:border-[#D4A24C] ring-1 ring-[#3E5641]'
+                        : 'bg-[#FFFDF8] dark:bg-stone-850 border-[#E7DECF] dark:border-stone-800 hover:border-[#D4A24C]'
+                    }`}
+                  >
+                    <span className="text-xl">{th.icon}</span>
+                    <div>
+                      <span className="block font-serif font-bold text-xs text-[#1F1B16] dark:text-amber-100">
+                        {th.name}
+                      </span>
+                      <span className="block text-[10px] font-sans text-stone-500">
+                        {th.desc}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-[#E7DECF] dark:border-stone-800 space-y-1.5">
+              <span className="text-[11px] font-sans font-extrabold text-stone-400 block uppercase tracking-wider">
+                Tamanho da Fonte ({settings.fontSize}px)
+              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-serif text-stone-400">A</span>
+                <input
+                  type="range"
+                  min="14"
+                  max="26"
+                  value={settings.fontSize}
+                  onChange={(e) => setSettings((prev) => ({ ...prev, fontSize: parseInt(e.target.value) }))}
+                  className="flex-1 accent-[#3E5641] h-1.5 bg-stone-200 dark:bg-stone-800 rounded-lg cursor-pointer"
+                />
+                <span className="text-lg font-serif text-stone-600 font-bold">A</span>
+              </div>
+            </div>
+
+            {/* Auto-Scroll Settings in Modal */}
+            <div className="pt-2 border-t border-[#E7DECF] dark:border-stone-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="block font-serif font-bold text-xs">Rolagem Automática (Auto-scroll)</span>
+                  <span className="block text-[10px] font-sans text-stone-500">Rola o texto suavemente enquanto você lê</span>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsAutoScrolling(!isAutoScrolling);
+                    showToast(isAutoScrolling ? 'Rolagem automática pausada' : 'Rolagem automática iniciada');
+                  }}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-sans font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                    isAutoScrolling
+                      ? 'bg-amber-500 text-stone-950 shadow-md'
+                      : 'bg-[#3E5641] text-amber-50 hover:bg-[#324635]'
+                  }`}
+                >
+                  {isAutoScrolling ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+                  <span>{isAutoScrolling ? 'Pausar' : 'Iniciar'}</span>
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between gap-2 bg-stone-100 dark:bg-stone-850 p-2.5 rounded-2xl border border-stone-200/60 dark:border-stone-800">
+                <span className="text-[11px] font-sans font-extrabold text-stone-500 uppercase tracking-wider pl-1">
+                  Velocidade:
+                </span>
+                <div className="flex items-center gap-1">
+                  {[
+                    { level: 1, label: '1x (Lento)' },
+                    { level: 2, label: '2x (Normal)' },
+                    { level: 3, label: '3x (Médio)' },
+                    { level: 4, label: '4x (Rápido)' },
+                    { level: 5, label: '5x (Máx)' },
+                  ].map((s) => (
+                    <button
+                      key={s.level}
+                      onClick={() => {
+                        setAutoScrollSpeed(s.level);
+                        showToast(`Velocidade de rolagem: ${s.level}x`);
+                      }}
+                      className={`px-2.5 py-1 rounded-xl text-[10px] font-sans font-black transition-all cursor-pointer ${
+                        autoScrollSpeed === s.level
+                          ? 'bg-[#3E5641] text-amber-50 shadow-xs'
+                          : 'bg-stone-200/70 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100'
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-[#E7DECF] dark:border-stone-800 flex items-center justify-between">
+              <div>
+                <span className="block font-serif font-bold text-xs">Modo Leitor em Foco</span>
+                <span className="block text-[10px] font-sans text-stone-500">Oculta menus para leitura imersiva</span>
+              </div>
+              <button
+                onClick={() => {
+                  setSettings(prev => ({ ...prev, focusMode: !prev.focusMode }));
+                  setShowAppearanceModal(false);
+                }}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-sans font-bold flex items-center gap-1.5 cursor-pointer ${
+                  settings.focusMode ? 'bg-rose-600 text-white' : 'bg-[#3E5641] text-amber-50'
+                }`}
+              >
+                {settings.focusMode ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                <span>{settings.focusMode ? 'Desativar Foco' : 'Ativar Foco'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Auto-Scroll Control Toolbar */}
+      {isAutoScrolling && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-stone-900/95 dark:bg-stone-950/95 text-stone-100 backdrop-blur-md px-4 py-2.5 rounded-full shadow-2xl border border-amber-500/40 flex items-center gap-3 animate-fade-in">
+          <div className="flex items-center gap-1.5 pl-1">
+            <ChevronsDown className="w-4 h-4 text-amber-400 animate-pulse" />
+            <span className="text-xs font-sans font-bold text-amber-200 whitespace-nowrap">Rolagem Ativa</span>
+          </div>
+
+          <div className="h-4 w-px bg-stone-700" />
+
+          {/* Pause Toggle */}
+          <button
+            onClick={() => {
+              setIsAutoScrolling(false);
+              showToast('Rolagem automática pausada');
+            }}
+            className="p-1.5 rounded-full bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold transition-all cursor-pointer"
+            title="Pausar Rolagem"
+          >
+            <Pause className="w-4 h-4 fill-current" />
+          </button>
+
+          {/* Speed Selector */}
+          <div className="flex items-center gap-1 bg-stone-800/80 px-2 py-1 rounded-full border border-stone-700">
+            <Gauge className="w-3.5 h-3.5 text-stone-400 hidden sm:block" />
+            {[1, 2, 3, 4, 5].map((s) => (
+              <button
+                key={s}
+                onClick={() => {
+                  setAutoScrollSpeed(s);
+                  showToast(`Velocidade: ${s}x`);
+                }}
+                className={`w-6 h-6 rounded-full text-[10px] font-sans font-black flex items-center justify-center transition-all cursor-pointer ${
+                  autoScrollSpeed === s
+                    ? 'bg-amber-400 text-stone-950 shadow-xs'
+                    : 'text-stone-400 hover:text-stone-200'
+                }`}
+              >
+                {s}x
+              </button>
+            ))}
+          </div>
+
+          <div className="h-4 w-px bg-stone-700" />
+
+          {/* Close button */}
+          <button
+            onClick={() => setIsAutoScrolling(false)}
+            className="p-1 rounded-full hover:bg-stone-800 text-stone-400 hover:text-stone-200 transition-all cursor-pointer"
+            title="Parar e Fechar"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       )}
 
       {/* Floating Toast notification */}

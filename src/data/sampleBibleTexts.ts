@@ -361,6 +361,35 @@ export const SAMPLE_VERSES: Record<string, Verse[]> = {
     { bookId: 'PSA', chapter: 23, verse: 5, text: 'Preparas uma mesa perante mim na presença dos meus inimigos, unges a minha cabeça com óleo, o meu cálice transborda.' },
     { bookId: 'PSA', chapter: 23, verse: 6, text: 'Certamente que a bondade e a misericórdia me seguirão todos os dias da minha vida; e habitarei na Casa do SENHOR por longos dias.' },
   ],
+  'PSA-23-INTERLINEAR': [
+    {
+      bookId: 'PSA',
+      chapter: 23,
+      verse: 1,
+      text: 'יְהוָה רֹעִי לֹא אֶחְסָר',
+      originalWords: [
+        { position: 1, surfaceText: 'יְהוָה', transliteration: 'Yahweh', strongNumber: 'H3068', portugueseGloss: 'O SENHOR', lemma: 'יְהוָה', morphologyCode: 'Proper Noun Masc', morphologyDescription: 'Nome Próprio Divino (Tetragrámaton)' },
+        { position: 2, surfaceText: 'רֹעִי', transliteration: 'roi', strongNumber: 'H7462', portugueseGloss: '[é] meu pastor', lemma: 'רָעָה', morphologyCode: 'Verb Qal Part Masc Sing + Suff 1cs', morphologyDescription: 'Particípio Ativo Masculino Singular com Sufixo Pessoal (meu pastor)' },
+        { position: 3, surfaceText: 'לֹא', transliteration: 'lo', strongNumber: 'H3808', portugueseGloss: 'não', lemma: 'לֹא', morphologyCode: 'Negative Particle', morphologyDescription: 'Partícula de negação absoluta' },
+        { position: 4, surfaceText: 'אֶחְסָר', transliteration: 'echsar', strongNumber: 'H2637', portugueseGloss: 'me faltará / terei falta', lemma: 'חָסֵר', morphologyCode: 'Verb Qal Imperf 1cs', morphologyDescription: 'Verbo Qal Imperfeito 1ª Pessoa Comum Singular' },
+      ],
+    },
+    {
+      bookId: 'PSA',
+      chapter: 23,
+      verse: 3,
+      text: 'נַפְשִׁי יְשׁוֹבֵב יַנְחֵנִי בְמַעְגְּלֵי־צֶדֶק לְמַעַן שְׁמוֹ',
+      originalWords: [
+        { position: 1, surfaceText: 'נַפְשִׁי', transliteration: 'naphshi', strongNumber: 'H5315', portugueseGloss: 'A minha alma', lemma: 'נֶפֶשׁ', morphologyCode: 'Noun Fem Sing + Suff 1cs', morphologyDescription: 'Substantivo Feminino Singular + Sufixo 1ª Pessoa' },
+        { position: 2, surfaceText: 'יְשׁוֹבֵב', transliteration: 'yeshobeb', strongNumber: 'H7725', portugueseGloss: 'restaura / refrigera', lemma: 'שׁוּב', morphologyCode: 'Verb Polel Imperf 3ms', morphologyDescription: 'Verbo Tronco Polel Imperfeito 3ms (restaurar plenamente)' },
+        { position: 3, surfaceText: 'יַנְחֵנִי', transliteration: 'yancheni', strongNumber: 'H5148', portugueseGloss: 'guia-me', lemma: 'נָחָה', morphologyCode: 'Verb Hiphil Imperf 3ms + Suff 1cs', morphologyDescription: 'Verbo Hiphil Imperfeito com Sufixo Objetivo 1cs' },
+        { position: 4, surfaceText: 'בְמַעְגְּלֵי', transliteration: 'be-maglei', strongNumber: 'H4570', portugueseGloss: 'pelas veredas / caminhos de', lemma: 'מַעְגָּל', morphologyCode: 'Prep + Noun Masc Plur Const', morphologyDescription: 'Preposição "B" + Substantivo Masculino Plural Construto' },
+        { position: 5, surfaceText: 'צֶדֶק', transliteration: 'tzedek', strongNumber: 'H6664', portugueseGloss: 'retidão / justiça', lemma: 'צֶדֶק', morphologyCode: 'Noun Masc Sing', morphologyDescription: 'Substantivo Masculino Singular' },
+        { position: 6, surfaceText: 'לְמַעַן', transliteration: 'lemaan', strongNumber: 'H4616', portugueseGloss: 'por amor de', lemma: 'מַעַן', morphologyCode: 'Prep', morphologyDescription: 'Preposição com sentido de causa/propósito' },
+        { position: 7, surfaceText: 'שְׁמוֹ', transliteration: 'shmo', strongNumber: 'H8034', portugueseGloss: 'o seu nome', lemma: 'שֵׁם', morphologyCode: 'Noun Masc Sing + Suff 3ms', morphologyDescription: 'Substantivo Masculino Singular + Sufixo 3ms' },
+      ],
+    },
+  ],
 
   // Romanos 8
   'ROM-8-ARC': [
@@ -369,6 +398,45 @@ export const SAMPLE_VERSES: Record<string, Verse[]> = {
     { bookId: 'ROM', chapter: 8, verse: 31, text: 'Que diremos, pois, a estas coisas? Se Deus é por nós, quem será contra nós?' },
     { bookId: 'ROM', chapter: 8, verse: 38, text: 'Porque estou certo de que nem a morte, nem a vida, nem os anjos, nem os principados, nem as potestades, nem o presente, nem o porvir,' },
     { bookId: 'ROM', chapter: 8, verse: 39, text: 'nem a altura, nem a profundidade, nem qualquer outra criatura nos poderá separar do amor de Deus, que está em Cristo Jesus, nosso Senhor!' },
+  ],
+  'ROM-8-INTERLINEAR': [
+    {
+      bookId: 'ROM',
+      chapter: 8,
+      verse: 1,
+      text: 'Οὐδὲν ἄρα νῦν κατάκριμα τοῖς ἐν Χριστῷ Ἰησοῦ.',
+      originalWords: [
+        { position: 1, surfaceText: 'Οὐδὲν', transliteration: 'Ouden', strongNumber: 'G3762', portugueseGloss: 'Nenhuma', lemma: 'οὐδείς', morphologyCode: 'Adj Neut Nom Sing', morphologyDescription: 'Adjetivo Neutro Nominativo Singular' },
+        { position: 2, surfaceText: 'ἄρα', transliteration: 'ara', strongNumber: 'G686', portugueseGloss: 'portanto / pois', lemma: 'ἄρα', morphologyCode: 'Particle', morphologyDescription: 'Partícula conclusiva de ilação' },
+        { position: 3, surfaceText: 'νῦν', transliteration: 'nun', strongNumber: 'G3568', portugueseGloss: 'agora', lemma: 'νῦν', morphologyCode: 'Adv', morphologyDescription: 'Advérbio temporal do presente' },
+        { position: 4, surfaceText: 'κατάκριμα', transliteration: 'katakrima', strongNumber: 'G2631', portugueseGloss: 'condenação / sentença judicial', lemma: 'κατάκριμα', morphologyCode: 'Noun Neut Nom Sing', morphologyDescription: 'Substantivo Neutro Nominativo Singular (veredito adverso)' },
+        { position: 5, surfaceText: 'τοῖς', transliteration: 'tois', strongNumber: 'G3588', portugueseGloss: 'para os que [estão]', lemma: 'ὁ', morphologyCode: 'Art Masc Dat Plur', morphologyDescription: 'Artigo Definido Dativo Plural' },
+        { position: 6, surfaceText: 'ἐν', transliteration: 'en', strongNumber: 'G1722', portugueseGloss: 'em', lemma: 'ἐν', morphologyCode: 'Prep Dat', morphologyDescription: 'Preposição com Dativo (união vital com)' },
+        { position: 7, surfaceText: 'Χριστῷ', transliteration: 'Christo', strongNumber: 'G5547', portugueseGloss: 'Cristo', lemma: 'Χριστός', morphologyCode: 'Noun Masc Dat Sing', morphologyDescription: 'Substantivo Masculino Dativo Singular' },
+        { position: 8, surfaceText: 'Ἰησοῦ', transliteration: 'Iesou', strongNumber: 'G2424', portugueseGloss: 'Jesus', lemma: 'Ἰησοῦς', morphologyCode: 'Noun Masc Dat Sing', morphologyDescription: 'Substantivo Masculino Dativo Singular' },
+      ],
+    },
+    {
+      bookId: 'ROM',
+      chapter: 8,
+      verse: 31,
+      text: 'Τί οὖν ἐροῦμεν πρὸς ταῦτα; εἰ ὁ θεὸς ὑπὲρ ἡμῶν, τίς καθ’ ἡμῶν;',
+      originalWords: [
+        { position: 1, surfaceText: 'Τί', transliteration: 'Ti', strongNumber: 'G5101', portugueseGloss: 'Que', lemma: 'τίς', morphologyCode: 'Pronoun Interrogative Neut', morphologyDescription: 'Pronome Interrogativo Neutro' },
+        { position: 2, surfaceText: 'οὖν', transliteration: 'oun', strongNumber: 'G3767', portugueseGloss: 'pois / então', lemma: 'οὖν', morphologyCode: 'Conj', morphologyDescription: 'Conjunção inferencial' },
+        { position: 3, surfaceText: 'ἐροῦμεν', transliteration: 'eroumen', strongNumber: 'G2046', portugueseGloss: 'diremos', lemma: 'ἐρῶ', morphologyCode: 'Verb Fut Act 1p', morphologyDescription: 'Verbo Futuro Ativo 1ª Pessoa do Plural' },
+        { position: 4, surfaceText: 'πρὸς', transliteration: 'pros', strongNumber: 'G4314', portugueseGloss: 'a / diante de', lemma: 'πρός', morphologyCode: 'Prep Acc', morphologyDescription: 'Preposição' },
+        { position: 5, surfaceText: 'ταῦτα', transliteration: 'tauta', strongNumber: 'G3778', portugueseGloss: 'estas coisas', lemma: 'οὗτος', morphologyCode: 'Pronoun Demonstrative Neut Plur', morphologyDescription: 'Pronome Demonstrativo Plural' },
+        { position: 6, surfaceText: 'εἰ', transliteration: 'ei', strongNumber: 'G1487', portugueseGloss: 'se', lemma: 'εἰ', morphologyCode: 'Conj Conditional', morphologyDescription: 'Conjunção Condicional Real' },
+        { position: 7, surfaceText: 'ὁ', transliteration: 'ho', strongNumber: 'G3588', portugueseGloss: 'o', lemma: 'ὁ', morphologyCode: 'Art', morphologyDescription: 'Artigo' },
+        { position: 8, surfaceText: 'θεὸς', transliteration: 'theos', strongNumber: 'G2316', portugueseGloss: 'Deus', lemma: 'θεός', morphologyCode: 'Noun Masc Nom Sing', morphologyDescription: 'Substantivo Masculino' },
+        { position: 9, surfaceText: 'ὑπὲρ', transliteration: 'hyper', strongNumber: 'G5228', portugueseGloss: 'por / a favor de', lemma: 'ὑπέρ', morphologyCode: 'Prep Gen', morphologyDescription: 'Preposição com Genitivo (em prol de)' },
+        { position: 10, surfaceText: 'ἡμῶν', transliteration: 'hemon', strongNumber: 'G2257', portugueseGloss: 'nós', lemma: 'ἐγώ', morphologyCode: 'Pronoun Personal Gen 1p', morphologyDescription: 'Pronome Pessoal 1ª Pessoa Plural' },
+        { position: 11, surfaceText: 'τίς', transliteration: 'tis', strongNumber: 'G5101', portugueseGloss: 'quem [será]', lemma: 'τίς', morphologyCode: 'Pronoun Interrogative Masc', morphologyDescription: 'Pronome Interrogativo' },
+        { position: 12, surfaceText: 'καθ’', transliteration: 'kath', strongNumber: 'G2596', portugueseGloss: 'contra', lemma: 'κατά', morphologyCode: 'Prep Gen', morphologyDescription: 'Preposição com Genitivo' },
+        { position: 13, surfaceText: 'ἡμῶν', transliteration: 'hemon', strongNumber: 'G2257', portugueseGloss: 'nós', lemma: 'ἐγώ', morphologyCode: 'Pronoun Gen 1p', morphologyDescription: 'Pronome Pessoal' },
+      ],
+    },
   ],
 };
 

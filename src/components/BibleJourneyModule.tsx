@@ -22,12 +22,14 @@ import {
   Lightbulb,
   FileText,
   ChevronRight,
-  Info
+  Info,
+  Calendar
 } from 'lucide-react';
 import { BIBLE_BOOKS } from '../data/bibleBooks';
 import { getBookStudyGuide } from '../data/bibleJourneyData';
 import { PropheciesView } from './PropheciesView';
 import { IllustrationsView } from './IllustrationsView';
+import { CustomReadingPlanBuilder } from './CustomReadingPlanBuilder';
 import { useTheme } from '../styles/themeConstants';
 
 interface BibleJourneyModuleProps {
@@ -109,7 +111,7 @@ const BOOK_CURIOSITIES: Record<string, string[]> = {
 
 export const BibleJourneyModule: React.FC<BibleJourneyModuleProps> = ({ onSelectBookForReading }) => {
   const { theme } = useTheme();
-  const [moduleType, setModuleType] = useState<'books' | 'prophecies' | 'illustrations'>('books');
+  const [moduleType, setModuleType] = useState<'books' | 'custom_plans' | 'prophecies' | 'illustrations'>('books');
   const [selectedBookId, setSelectedBookId] = useState<string>('ROM');
   const [filterTestament, setFilterTestament] = useState<'ALL' | 'AT' | 'NT'>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -153,6 +155,17 @@ export const BibleJourneyModule: React.FC<BibleJourneyModuleProps> = ({ onSelect
             <span>Guia dos 66 Livros</span>
           </button>
           <button
+            onClick={() => setModuleType('custom_plans')}
+            className={`px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-sans font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+              moduleType === 'custom_plans'
+                ? 'bg-theme-accent text-amber-50 shadow-sm'
+                : 'text-theme-secondary hover:bg-theme-card-hover'
+            }`}
+          >
+            <Calendar className="w-4 h-4 text-[#D4A24C]" />
+            <span>Planos Personalizados</span>
+          </button>
+          <button
             onClick={() => setModuleType('prophecies')}
             className={`px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-sans font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
               moduleType === 'prophecies'
@@ -177,7 +190,11 @@ export const BibleJourneyModule: React.FC<BibleJourneyModuleProps> = ({ onSelect
         </div>
       </div>
 
-      {moduleType === 'prophecies' ? (
+      {moduleType === 'custom_plans' ? (
+        <div className="animate-fade-in">
+          <CustomReadingPlanBuilder onOpenPassage={onSelectBookForReading} />
+        </div>
+      ) : moduleType === 'prophecies' ? (
         <div className="animate-fade-in">
           <PropheciesView />
         </div>

@@ -100,22 +100,26 @@ export function App() {
     setActiveTab('study');
   };
 
+  const isFocusModeActive = settings.focusMode && activeTab === 'reader';
+
   return (
     <div className="min-h-screen bg-theme-app text-theme-primary font-sans transition-colors duration-200">
-      {/* App Main Navigation Header */}
-      <Header
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        settings={settings}
-        setSettings={setSettings}
-        onOpenBookSelector={() => setIsBookSelectorOpen(true)}
-        currentBookName={currentBook.name}
-        currentChapter={currentChapter}
-        onOpenOfflineManager={() => setIsOfflineModalOpen(true)}
-      />
+      {/* App Main Navigation Header - Hidden in Focus Reader Mode */}
+      {!isFocusModeActive && (
+        <Header
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          settings={settings}
+          setSettings={setSettings}
+          onOpenBookSelector={() => setIsBookSelectorOpen(true)}
+          currentBookName={currentBook.name}
+          currentChapter={currentChapter}
+          onOpenOfflineManager={() => setIsOfflineModalOpen(true)}
+        />
+      )}
 
       {/* Main View Router Content */}
-      <main className="pb-24 overflow-x-hidden">
+      <main className={`${isFocusModeActive ? 'pb-6 pt-2' : 'pb-24'} overflow-x-hidden`}>
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -226,52 +230,54 @@ export function App() {
         onClose={() => setIsOfflineModalOpen(false)}
       />
 
-      {/* Premium Mobile-First Bottom Navigation Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#FFFDF8]/95 dark:bg-[#1A1816]/95 backdrop-blur-md border-t border-[#E7DECF] dark:border-stone-800 shadow-[0_-4px_24px_rgba(31,27,22,0.03)] px-4 py-2 flex items-center justify-around">
-        {[
-          { id: 'home', label: 'Início', icon: Compass },
-          { id: 'reader', label: 'Bíblia', icon: BookOpen },
-          { id: 'challenge', label: 'Jornada', icon: Award },
-          { id: 'study', label: 'Estudo', icon: Sparkles },
-          { id: 'ai', label: 'Perfil', icon: User },
-        ].map((item) => {
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id as any)}
-              className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all duration-200 relative group"
-            >
-              <div
-                className={`p-1 rounded-lg transition-all duration-200 ${
-                  isActive
-                    ? 'text-[#3E5641] dark:text-[#D4A24C] scale-110'
-                    : 'text-theme-muted group-hover:text-theme-primary'
-                }`}
+      {/* Premium Mobile-First Bottom Navigation Bar - Hidden in Focus Reader Mode */}
+      {!isFocusModeActive && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#FFFDF8]/95 dark:bg-[#1A1816]/95 backdrop-blur-md border-t border-[#E7DECF] dark:border-stone-800 shadow-[0_-4px_24px_rgba(31,27,22,0.03)] px-4 py-2 flex items-center justify-around">
+          {[
+            { id: 'home', label: 'Início', icon: Compass },
+            { id: 'reader', label: 'Bíblia', icon: BookOpen },
+            { id: 'challenge', label: 'Jornada', icon: Award },
+            { id: 'study', label: 'Estudo', icon: Sparkles },
+            { id: 'ai', label: 'Perfil', icon: User },
+          ].map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id as any)}
+                className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all duration-200 relative group"
               >
-                <Icon className="w-5 h-5" />
-              </div>
-              <span
-                className={`text-[10px] font-sans font-bold tracking-tight mt-0.5 transition-colors duration-200 ${
-                  isActive
-                    ? 'text-[#3E5641] dark:text-[#D4A24C]'
-                    : 'text-theme-muted group-hover:text-theme-primary'
-                }`}
-              >
-                {item.label}
-              </span>
-              {isActive && (
-                <motion.div
-                  layoutId="bottomNavDot"
-                  className="absolute bottom-0 w-1 h-1 rounded-full bg-[#3E5641] dark:bg-[#D4A24C]"
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                />
-              )}
-            </button>
-          );
-        })}
-      </div>
+                <div
+                  className={`p-1 rounded-lg transition-all duration-200 ${
+                    isActive
+                      ? 'text-[#3E5641] dark:text-[#D4A24C] scale-110'
+                      : 'text-theme-muted group-hover:text-theme-primary'
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                </div>
+                <span
+                  className={`text-[10px] font-sans font-bold tracking-tight mt-0.5 transition-colors duration-200 ${
+                    isActive
+                      ? 'text-[#3E5641] dark:text-[#D4A24C]'
+                      : 'text-theme-muted group-hover:text-theme-primary'
+                  }`}
+                >
+                  {item.label}
+                </span>
+                {isActive && (
+                  <motion.div
+                    layoutId="bottomNavDot"
+                    className="absolute bottom-0 w-1 h-1 rounded-full bg-[#3E5641] dark:bg-[#D4A24C]"
+                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

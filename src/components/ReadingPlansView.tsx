@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, CheckCircle, Circle, Flame, Award, BookOpen, Clock } from 'lucide-react';
+import { Calendar, CheckCircle, Circle, Flame, Award, BookOpen, Clock, Target } from 'lucide-react';
 import { ReadingPlan, UserPlanProgress } from '../types';
 import { READING_PLANS } from '../data/readingPlansData';
 import { localDB } from '../utils/db';
 import { Desafio365View } from './Desafio365View';
+import { CustomReadingPlanBuilder } from './CustomReadingPlanBuilder';
 
 interface ReadingPlansViewProps {
   onOpenPassage?: (bookId: string, chapter: number) => void;
 }
 
 export const ReadingPlansView: React.FC<ReadingPlansViewProps> = ({ onOpenPassage }) => {
-  const [subTab, setSubTab] = useState<'standard' | 'challenge'>('standard');
+  const [subTab, setSubTab] = useState<'standard' | 'custom' | 'challenge'>('standard');
   const [selectedPlan, setSelectedPlan] = useState<ReadingPlan>(READING_PLANS[0]);
   const [progress, setProgress] = useState<UserPlanProgress>({
     planId: READING_PLANS[0].id,
@@ -63,29 +64,42 @@ export const ReadingPlansView: React.FC<ReadingPlansViewProps> = ({ onOpenPassag
       <div className="flex items-center gap-1.5 bg-amber-500/5 dark:bg-stone-900/40 p-1 rounded-2xl border border-amber-900/10 dark:border-stone-800 w-full sm:w-max">
         <button
           onClick={() => setSubTab('standard')}
-          className={`flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2 ${
+          className={`flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
             subTab === 'standard'
               ? 'bg-amber-800 text-amber-50 dark:bg-amber-600 shadow-sm'
               : 'text-stone-600 dark:text-stone-300 hover:bg-amber-500/10'
           }`}
         >
           <Calendar className="w-4 h-4" />
-          <span>Planos de Leitura Gerais</span>
+          <span>Planos Gerais</span>
+        </button>
+        <button
+          onClick={() => setSubTab('custom')}
+          className={`flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            subTab === 'custom'
+              ? 'bg-amber-800 text-amber-50 dark:bg-amber-600 shadow-sm'
+              : 'text-stone-600 dark:text-stone-300 hover:bg-amber-500/10'
+          }`}
+        >
+          <Target className="w-4 h-4 text-amber-500" />
+          <span>Planos Personalizados</span>
         </button>
         <button
           onClick={() => setSubTab('challenge')}
-          className={`flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2 ${
+          className={`flex-1 sm:flex-initial px-5 py-2.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
             subTab === 'challenge'
               ? 'bg-amber-800 text-amber-50 dark:bg-amber-600 shadow-sm'
               : 'text-stone-600 dark:text-stone-300 hover:bg-amber-500/10'
           }`}
         >
           <Flame className="w-4 h-4 text-orange-500 animate-pulse" />
-          <span>Desafio 365 Dias com Deus</span>
+          <span>Desafio 365 Dias</span>
         </button>
       </div>
 
-      {subTab === 'challenge' ? (
+      {subTab === 'custom' ? (
+        <CustomReadingPlanBuilder onOpenPassage={onOpenPassage} />
+      ) : subTab === 'challenge' ? (
         <Desafio365View onOpenPassage={onOpenPassage} />
       ) : (
         <>

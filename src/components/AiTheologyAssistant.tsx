@@ -24,7 +24,14 @@ import {
   UserCheck,
   AlertTriangle,
   Eye,
-  EyeOff
+  EyeOff,
+  RotateCcw,
+  Trash2,
+  AlertOctagon,
+  X,
+  Flame,
+  BookMarked,
+  BookOpen
 } from 'lucide-react';
 import { 
   auth, 
@@ -38,7 +45,15 @@ import {
   setDoc,
   getDoc
 } from '../services/firebase';
-import { syncUserData, SyncStats, initializeUserProgressInFirebase } from '../services/syncService';
+import { 
+  syncUserData, 
+  SyncStats, 
+  initializeUserProgressInFirebase,
+  resetDesafioProgressInApp,
+  resetUserContentInApp,
+  resetDevotionalsAndFavoritesInApp,
+  fullFactoryResetInApp
+} from '../services/syncService';
 import { localDB } from '../utils/db';
 import { SAMPLE_VERSES } from '../data/sampleBibleTexts';
 
@@ -97,6 +112,45 @@ export const AiTheologyAssistant: React.FC<AiTheologyAssistantProps> = ({ onOpen
   const [hlCount, setHlCount] = useState(0);
   const [notesCount, setNotesCount] = useState(0);
   const [bookmarksCount, setBookmarksCount] = useState(0);
+
+  // Reset progress modal states
+  const [resetModalType, setResetModalType] = useState<'desafio' | 'content' | 'devotionals' | 'full' | null>(null);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetFeedbackMsg, setResetFeedbackMsg] = useState<string | null>(null);
+
+  const handleExecuteReset = async () => {
+    if (!resetModalType) return;
+    setResetLoading(true);
+    setResetFeedbackMsg(null);
+
+    const uid = currentUser?.uid;
+
+    try {
+      if (resetModalType === 'desafio') {
+        await resetDesafioProgressInApp(uid);
+        setResetFeedbackMsg('Progresso do Desafio 365 Dias zerado com sucesso!');
+      } else if (resetModalType === 'content') {
+        await resetUserContentInApp(uid);
+        setResetFeedbackMsg('Todas as anotações, destaques e marcadores foram removidos com sucesso!');
+      } else if (resetModalType === 'devotionals') {
+        await resetDevotionalsAndFavoritesInApp();
+        setResetFeedbackMsg('Histórico de estudos devocionais e personagens favoritos zerados!');
+      } else if (resetModalType === 'full') {
+        await fullFactoryResetInApp(uid);
+        setResetFeedbackMsg('Reset completo de fábrica realizado! Todos os dados e progresso foram redefinidos do zero.');
+      }
+
+      await refreshLocalCounts();
+      setTimeout(() => {
+        setResetModalType(null);
+      }, 1800);
+    } catch (err: any) {
+      console.error('Error executing reset:', err);
+      setResetFeedbackMsg('Ocorreu um erro ao zerar o progresso: ' + err.message);
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   useEffect(() => {
     // Listen for auth state
@@ -622,6 +676,91 @@ export const AiTheologyAssistant: React.FC<AiTheologyAssistantProps> = ({ onOpen
         </div>
       </div>
 
+      {/* 2.5 Configurações de Reset / Zerar Progresso Card (USER REQUEST) */}
+      <div className="p-4 rounded-3xl bg-[#FFFDF8] dark:bg-[#1C1A18] border border-[#E7DECF] dark:border-stone-850 shadow-2xs space-y-3.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+              <RotateCcw className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="font-serif font-extrabold text-xs text-stone-900 dark:text-stone-100">
+                Opções de Resetar / Zerar Progresso
+              </h3>
+              <p className="text-[10px] text-stone-500 font-sans">
+                Reinicie planos, apague marcadores ou faça reset total
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+          {/* Reset Desafio 365 */}
+          <button
+            onClick={() => setResetModalType('desafio')}
+            className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-850/80 hover:bg-amber-500/10 border border-stone-200 dark:border-stone-800 hover:border-amber-500/40 text-left transition-all cursor-pointer space-y-1 group"
+          >
+            <div className="flex items-center justify-between">
+              <span className="font-serif font-bold text-xs text-stone-800 dark:text-stone-200 group-hover:text-amber-700 dark:group-hover:text-amber-300">
+                Zerar Desafio 365 Dias
+              </span>
+              <Flame className="w-3.5 h-3.5 text-red-500 shrink-0" />
+            </div>
+            <p className="text-[10px] font-sans text-stone-500">
+              Reinicia o contador e os dias lidos no plano de leitura
+            </p>
+          </button>
+
+          {/* Reset Notes, Highlights, Bookmarks */}
+          <button
+            onClick={() => setResetModalType('content')}
+            className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-850/80 hover:bg-rose-500/10 border border-stone-200 dark:border-stone-800 hover:border-rose-500/40 text-left transition-all cursor-pointer space-y-1 group"
+          >
+            <div className="flex items-center justify-between">
+              <span className="font-serif font-bold text-xs text-stone-800 dark:text-stone-200 group-hover:text-rose-700 dark:group-hover:text-rose-400">
+                Zerar Notas e Grifos
+              </span>
+              <BookMarked className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+            </div>
+            <p className="text-[10px] font-sans text-stone-500">
+              Apaga todos os grifos coloridos, marcadores e anotações
+            </p>
+          </button>
+
+          {/* Reset Devotionals */}
+          <button
+            onClick={() => setResetModalType('devotionals')}
+            className="p-3 rounded-2xl bg-stone-50 dark:bg-stone-850/80 hover:bg-emerald-500/10 border border-stone-200 dark:border-stone-800 hover:border-emerald-500/40 text-left transition-all cursor-pointer space-y-1 group"
+          >
+            <div className="flex items-center justify-between">
+              <span className="font-serif font-bold text-xs text-stone-800 dark:text-stone-200 group-hover:text-emerald-700 dark:group-hover:text-emerald-300">
+                Zerar Devocionais
+              </span>
+              <BookOpen className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            </div>
+            <p className="text-[10px] font-sans text-stone-500">
+              Reinicia o progresso dos estudos mentais e personagens
+            </p>
+          </button>
+
+          {/* Full Reset */}
+          <button
+            onClick={() => setResetModalType('full')}
+            className="p-3 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-left transition-all cursor-pointer space-y-1 group"
+          >
+            <div className="flex items-center justify-between">
+              <span className="font-serif font-bold text-xs text-rose-700 dark:text-rose-300">
+                Reset Completo de Fábrica
+              </span>
+              <Trash2 className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400 shrink-0" />
+            </div>
+            <p className="text-[10px] font-sans text-rose-600/80 dark:text-rose-300/80">
+              Zera TODO o aplicativo e restaura estado inicial do zero
+            </p>
+          </button>
+        </div>
+      </div>
+
       {/* 3. Falar com Teólogo IA Chat Section */}
       <div className="p-5 rounded-3xl bg-[#FFFDF8] dark:bg-[#1C1A18] border border-[#E7DECF] dark:border-stone-850 shadow-2xs space-y-4">
         
@@ -717,6 +856,94 @@ export const AiTheologyAssistant: React.FC<AiTheologyAssistantProps> = ({ onOpen
           </button>
         </form>
       </div>
+
+      {/* 4. Modal de Confirmação para Zerar Progresso (Reset Modal) */}
+      {resetModalType && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-[#FFFDF8] dark:bg-[#1C1A18] border border-[#E7DECF] dark:border-stone-800 rounded-3xl max-w-md w-full p-5 space-y-4 shadow-2xl relative">
+            
+            {/* Modal Header */}
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                  <AlertOctagon className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-serif font-extrabold text-sm text-stone-900 dark:text-amber-100">
+                    {resetModalType === 'desafio' && 'Zerar Desafio 365 Dias'}
+                    {resetModalType === 'content' && 'Zerar Anotações e Grifos'}
+                    {resetModalType === 'devotionals' && 'Zerar Devocionais e Favoritos'}
+                    {resetModalType === 'full' && 'Reset Completo de Fábrica'}
+                  </h3>
+                  <p className="text-[11px] font-sans text-stone-500">
+                    Confirmação de segurança
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => {
+                  setResetModalType(null);
+                  setResetFeedbackMsg(null);
+                }}
+                disabled={resetLoading}
+                className="p-1.5 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 cursor-pointer transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Description Warning */}
+            <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-700 dark:text-rose-300 text-xs font-sans leading-relaxed space-y-1">
+              <p className="font-bold">Atenção!</p>
+              <p>
+                {resetModalType === 'desafio' && 'Esta ação irá desmarcar todos os dias lidos no seu plano de 365 dias e zerar suas anotações semanais do desafio.'}
+                {resetModalType === 'content' && 'Esta ação irá apagar permanentemente todas as suas anotações pessoais, versículos grifados com cores e marcadores salvos.'}
+                {resetModalType === 'devotionals' && 'Esta ação irá limpar o histórico de leitura dos estudos devocionais mensais e a lista de personagens bíblicos favoritados.'}
+                {resetModalType === 'full' && 'Esta ação é irreversível! Irá apagar absolutamente TODOS os dados locais e sincronizados de leitura, marcadores, grifos, notas e planos do seu aplicativo.'}
+              </p>
+            </div>
+
+            {/* Success feedback message inside modal */}
+            {resetFeedbackMsg && (
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-sans flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span>{resetFeedbackMsg}</span>
+              </div>
+            )}
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-[#E7DECF] dark:border-stone-800">
+              <button
+                type="button"
+                onClick={() => {
+                  setResetModalType(null);
+                  setResetFeedbackMsg(null);
+                }}
+                disabled={resetLoading}
+                className="px-4 py-2.5 rounded-xl border border-[#E7DECF] dark:border-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-850 font-sans font-bold text-xs cursor-pointer transition-colors"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExecuteReset}
+                disabled={resetLoading}
+                className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-sans font-extrabold text-xs cursor-pointer transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
+              >
+                {resetLoading ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="w-3.5 h-3.5" />
+                )}
+                <span>Sim, Zerar Agora</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

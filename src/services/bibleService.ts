@@ -80,10 +80,34 @@ export async function fetchChapterVerses(
     }
   }
 
-  // 4. Fallback generated verses for complete continuous reading
+// 4. Fallback generated verses for complete continuous reading
   const fallback = generateFallbackChapterVerses(normalizedBookId, chapter, version);
   await localDB.cacheChapterVerses(version, normalizedBookId, chapter, fallback);
   return fallback;
+}
+
+export async function downloadFullVersionOffline(
+  versionCode: string,
+  onProgress?: (progressPct: number, currentChapterText: string) => void
+): Promise<void> {
+  let totalChapters = 0;
+  BIBLE_BOOKS.forEach((b) => (totalChapters += b.totalChapters));
+  let completedChapters = 0;
+
+  for (const book of BIBLE_BOOKS) {
+    for (let c = 1; c <= book.totalChapters; c++) {
+      const existing = await localDB.getCachedChapterVerses(versionCode, book.id, c);
+      if (!existing || existing.length === 0) {
+        const verses = await fetchChapterVerses(book.id, c, versionCode as BibleVersionCode);
+        await localDB.cacheChapterVerses(versionCode, book.id, c, verses);
+      }
+      completedChapters++;
+      if (onProgress && (completedChapters % 5 === 0 || completedChapters === totalChapters)) {
+        const pct = Math.round((completedChapters / totalChapters) * 100);
+        onProgress(pct, `${book.name} cap. ${c} (${completedChapters}/${totalChapters})`);
+      }
+    }
+  }
 }
 
 export function searchBibleVerses(query: string, version: BibleVersionCode): { book: BibleBook; chapter: number; verse: number; text: string }[] {
