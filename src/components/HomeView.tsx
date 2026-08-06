@@ -95,7 +95,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       </div>
 
       {/* 2. Featured Banner: Scriptorium Devotional Versículo do Dia (Majestic Landscape Visuals) */}
-      <div className="relative overflow-hidden rounded-3xl border border-theme bg-theme-card shadow-md flex flex-col md:flex-row min-h-[220px]">
+      <div className="relative overflow-hidden rounded-3xl border border-theme bg-theme-card shadow-md flex flex-col md:flex-row min-h-[220px] cls-card-lg">
         {/* Artistic Landscape Overlay Side */}
         <div className="md:w-[40%] bg-gradient-to-tr from-[#1E2D1F] via-[#2B422F] to-[#D4A24C] relative overflow-hidden flex flex-col justify-end p-6 text-amber-50 shrink-0 border-b md:border-b-0 md:border-r border-theme">
           {/* Glowing Divine Rays backplate */}
@@ -153,7 +153,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       {/* 3. Reading Progress Timeline Highlight */}
       <div 
         onClick={onGoToChallenge}
-        className="p-5 sm:p-6 rounded-3xl bg-theme-card border border-theme hover:border-theme-accent/30 transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm group"
+        className="p-5 sm:p-6 rounded-3xl bg-theme-card border border-theme hover:border-theme-accent/30 transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm group cls-card-sm"
       >
         <div className="flex items-center gap-4 flex-1">
           {/* Achievement Trophy visual badge */}
@@ -188,7 +188,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       {/* 3.5 Monthly Devotional & Study Highlight Banner */}
       <div 
         onClick={onGoToDevotional}
-        className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-[#FFFDF8] to-[#F5ECE0] dark:from-[#1C1917] dark:to-[#171513] border border-theme hover:border-[#D4A24C]/40 transition-all cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-5 shadow-sm group relative overflow-hidden"
+        className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-[#FFFDF8] to-[#F5ECE0] dark:from-[#1C1917] dark:to-[#171513] border border-theme hover:border-[#D4A24C]/40 transition-all cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-5 shadow-sm group relative overflow-hidden cls-card-md"
       >
         <div className="absolute top-0 right-0 w-40 h-40 bg-[#D4A24C]/5 rounded-full blur-xl pointer-events-none" />
         
@@ -229,7 +229,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {/* Bento Card 1: Continuar Leitura */}
           <div 
             onClick={onContinueReading}
-            className="p-6 rounded-3xl bg-theme-card border border-theme hover:border-theme-accent/25 transition-all cursor-pointer flex flex-col justify-between min-h-[190px] group shadow-sm"
+            className="p-6 rounded-3xl bg-theme-card border border-theme hover:border-theme-accent/25 transition-all cursor-pointer flex flex-col justify-between min-h-[190px] group shadow-sm cls-card-grid"
           >
             <div className="space-y-3">
               <div className="w-10 h-10 rounded-2xl bg-theme-accent/10 text-theme-accent flex items-center justify-center border border-theme-accent/15">
@@ -259,7 +259,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {/* Bento Card 2: Guia de Estudo dos Livros */}
           <div 
             onClick={onGoToStudy}
-            className="p-6 rounded-3xl bg-theme-card border border-theme hover:border-theme-accent/25 transition-all cursor-pointer flex flex-col justify-between min-h-[190px] group shadow-sm"
+            className="p-6 rounded-3xl bg-theme-card border border-theme hover:border-theme-accent/25 transition-all cursor-pointer flex flex-col justify-between min-h-[190px] group shadow-sm cls-card-grid"
           >
             <div className="space-y-3">
               <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
@@ -289,7 +289,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {/* Bento Card 3: Dicionário & Números Strong (Conditional access) */}
           <div 
             onClick={onGoToDictionary}
-            className="p-6 rounded-3xl bg-theme-card border border-theme hover:border-theme-accent/25 transition-all cursor-pointer flex flex-col justify-between min-h-[190px] group shadow-sm"
+            className="p-6 rounded-3xl bg-theme-card border border-theme hover:border-theme-accent/25 transition-all cursor-pointer flex flex-col justify-between min-h-[190px] group shadow-sm cls-card-grid"
           >
             <div className="space-y-3">
               <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-800 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
@@ -319,7 +319,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {/* Bento Card 4: Desafio 365 Cronológico */}
           <div 
             onClick={onGoToChallenge}
-            className="p-6 rounded-3xl bg-theme-card border border-theme hover:border-theme-accent/25 transition-all cursor-pointer flex flex-col justify-between min-h-[190px] group shadow-sm"
+            className="p-6 rounded-3xl bg-theme-card border border-theme hover:border-theme-accent/25 transition-all cursor-pointer flex flex-col justify-between min-h-[190px] group shadow-sm cls-card-grid"
           >
             <div className="space-y-3">
               <div className="w-10 h-10 rounded-2xl bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center border border-red-500/20">

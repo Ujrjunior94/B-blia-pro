@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, Settings, RotateCcw, ShieldAlert, Sliders, Type, Volume2, Moon, Download, Database } from 'lucide-react';
+import { X, Settings, RotateCcw, ShieldAlert, Sliders, Type, Volume2, Moon, Download, Database, Activity } from 'lucide-react';
 import { ReaderSettings } from '../types';
 import { ResetProgressModal } from './ResetProgressModal';
+import { ErrorLogsModal } from './ErrorLogsModal';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onOpenOfflineManager,
 }) => {
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [isLogsModalOpen, setIsLogsModalOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -148,6 +150,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             />
           </div>
 
+          {/* Diagnóstico & Monitoramento de Erros */}
+          <div className="p-4 rounded-2xl bg-[#F7F1E5]/50 dark:bg-stone-900 border border-[#E7DECF] dark:border-stone-800 flex items-center justify-between">
+            <div className="space-y-0.5">
+              <span className="text-xs font-sans font-extrabold text-[#1F1B16] dark:text-stone-200 block">
+                Central de Diagnóstico & Firebase
+              </span>
+              <span className="text-[11px] font-serif italic text-stone-500">
+                Inspecione logs de sincronização, erros de rede e estado do Firestore.
+              </span>
+            </div>
+            <button
+              onClick={() => setIsLogsModalOpen(true)}
+              className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-sans font-bold text-xs cursor-pointer transition-all flex items-center gap-1.5 shrink-0 shadow-2xs"
+            >
+              <Activity className="w-3.5 h-3.5" />
+              <span>Ver Logs</span>
+            </button>
+          </div>
+
           {/* Gerenciamento de Dados Offline */}
           {onOpenOfflineManager && (
             <div className="p-4 rounded-2xl bg-[#F7F1E5]/50 dark:bg-stone-900 border border-[#E7DECF] dark:border-stone-800 flex items-center justify-between">
@@ -172,7 +193,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           )}
 
-          {/* SEÇÃO DE RESET DE PROGRESSO COM CONFIRMAÇÃO DE SEGURANÇA (USER REQUEST) */}
+          {/* SEÇÃO DE RESET DE PROGRESSO COM CONFIRMAÇÃO DE SEGURANÇA */}
           <div className="p-5 rounded-2xl bg-rose-500/10 dark:bg-rose-950/20 border border-rose-500/30 space-y-3">
             <div className="flex items-start gap-3">
               <div className="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/30">
@@ -205,7 +226,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           onClose={() => setIsResetModalOpen(false)}
         />
 
+        {/* Error Logs & Diagnostic Modal */}
+        <ErrorLogsModal
+          isOpen={isLogsModalOpen}
+          onClose={() => setIsLogsModalOpen(false)}
+        />
+
       </div>
     </div>
   );
 };
+

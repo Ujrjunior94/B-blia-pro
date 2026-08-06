@@ -316,7 +316,7 @@ export const PropheciesView: React.FC = () => {
                       return (
                         <div
                           key={p.id}
-                          className="flex flex-col justify-between bg-theme-card border border-theme rounded-2xl shadow-sm hover:shadow-md hover:border-amber-500/25 dark:hover:border-amber-500/35 transition-all duration-200"
+                          className="flex flex-col justify-between bg-theme-card border border-theme rounded-2xl shadow-sm hover:shadow-md hover:border-amber-500/25 dark:hover:border-amber-500/35 transition-all duration-200 cls-card-grid"
                         >
                           <div className="p-5 space-y-4">
                             {/* Card Header: Theme and Status */}

@@ -34,6 +34,8 @@ export const ReadingPlansView: React.FC<ReadingPlansViewProps> = ({ onOpenPassag
           setProgress(initial);
         }
       }
+    }).catch(err => {
+      console.error('Error fetching plan progress:', err);
     });
     return () => {
       isMounted = false;
@@ -138,7 +140,7 @@ export const ReadingPlansView: React.FC<ReadingPlansViewProps> = ({ onOpenPassag
                 <button
                   key={plan.id}
                   onClick={() => setSelectedPlan(plan)}
-                  className={`p-5 rounded-2xl text-left border transition-all flex flex-col justify-between ${
+                  className={`p-5 rounded-2xl text-left border transition-all flex flex-col justify-between cls-card-sm ${
                     isSelected
                       ? 'bg-emerald-900/10 border-emerald-600 dark:bg-emerald-950/40 dark:border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
                       : 'bg-white dark:bg-stone-900 border-amber-900/10 dark:border-stone-800 hover:border-emerald-600/50'
@@ -194,7 +196,7 @@ export const ReadingPlansView: React.FC<ReadingPlansViewProps> = ({ onOpenPassag
                 return (
                   <div
                     key={dayItem.day}
-                    className={`p-4 rounded-2xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+                    className={`p-4 rounded-2xl border transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 cls-card-sm ${
                       isDone
                         ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800/40'
                         : 'bg-stone-50/50 dark:bg-stone-850 border-amber-900/5 dark:border-stone-800'

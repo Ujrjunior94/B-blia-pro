@@ -13,6 +13,7 @@ import {
   SetOptions
 } from 'firebase/firestore';
 import { db, auth } from './config';
+import { logError } from '../errorLogger';
 
 export enum OperationType {
   CREATE = 'create',
@@ -36,9 +37,10 @@ export interface FirestoreErrorInfo {
   };
 }
 
-export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null): never {
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null): void {
+  const errMessage = error instanceof Error ? error.message : String(error);
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: errMessage,
     authInfo: {
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,
@@ -49,15 +51,34 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+
+  logError(
+    'firebase',
+    `Operação do Firestore [${operationType}] em ${path || 'desconhecido'}: ${errMessage}`,
+    error,
+    errInfo,
+    'warning'
+  );
+
+  console.warn('Firestore Operation Info: ', JSON.stringify(errInfo));
 }
 
 export async function testFirestoreConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
+    logError('firebase', 'Teste de conexão com Firestore executado com sucesso.', undefined, undefined, 'info');
   } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
+    const isOffline = error instanceof Error && error.message.includes('the client is offline');
+    logError(
+      'firebase',
+      isOffline
+        ? 'Verificação de conexão Firebase: cliente offline ou configuração pendente.'
+        : `Erro ao testar conexão com Firebase Firestore: ${error instanceof Error ? error.message : String(error)}`,
+      error,
+      { isOffline },
+      isOffline ? 'warning' : 'error'
+    );
+    if (isOffline) {
       console.error("Firebase connection check: client offline or configuration pending.");
     }
   }

@@ -44,6 +44,7 @@ import { fetchChapterVerses, BIBLE_VERSIONS } from '../services/bibleService';
 import { localDB } from '../utils/db';
 import { VerseShareModal } from './VerseShareModal';
 import { DevotionalCardModal } from './DevotionalCardModal';
+import { ImageWithSkeleton } from './ImageWithSkeleton';
 import { saveHighlight, removeHighlight, subscribeUserHighlights } from '../services/highlightService';
 import { auth, onAuthStateChanged } from '../services/firebase';
 
@@ -323,16 +324,34 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
     let isMounted = true;
     setLoading(true);
 
-    fetchChapterVerses(currentBook.id, currentChapter, settings.version).then((data) => {
-      if (isMounted) {
-        setVerses(data);
-        setLoading(false);
-      }
-    });
+    fetchChapterVerses(currentBook.id, currentChapter, settings.version)
+      .then((data) => {
+        if (isMounted) {
+          setVerses(data);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          console.error('Error fetching chapter verses:', err);
+          setLoading(false);
+        }
+      });
 
-    localDB.getHighlights().then((res) => isMounted && setHighlights((prev) => [...prev.filter(p => !res.some(r => r.id === p.id)), ...res]));
-    localDB.getBookmarks().then((res) => isMounted && setBookmarks(res));
-    localDB.getNotes().then((res) => isMounted && setNotes((prev) => [...prev.filter(p => !res.some(r => r.id === p.id)), ...res]));
+    localDB
+      .getHighlights()
+      .then((res) => isMounted && setHighlights((prev) => [...prev.filter((p) => !res.some((r) => r.id === p.id)), ...res]))
+      .catch((err) => console.error('Error loading highlights:', err));
+
+    localDB
+      .getBookmarks()
+      .then((res) => isMounted && setBookmarks(res))
+      .catch((err) => console.error('Error loading bookmarks:', err));
+
+    localDB
+      .getNotes()
+      .then((res) => isMounted && setNotes((prev) => [...prev.filter((p) => !res.some((r) => r.id === p.id)), ...res]))
+      .catch((err) => console.error('Error loading notes:', err));
 
     return () => {
       isMounted = false;
@@ -342,42 +361,52 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   const handleToggleHighlight = async (color: string, targetVerse?: Verse) => {
     const verseToHighlight = targetVerse || selectedVerse;
     if (!verseToHighlight) return;
-    const existing = highlights.find(
-      (h) => h.bookId === currentBook.id && h.chapter === currentChapter && h.verse === verseToHighlight.verse
-    );
 
-    if (existing && existing.color === color) {
-      await removeHighlight(existing.id);
-      setHighlights((prev) => prev.filter((h) => h.id !== existing.id));
-      showToast(`Destaque removido do versículo ${verseToHighlight.verse}`);
-    } else {
-      const newHL: UserHighlight = {
-        id: `${currentBook.id}-${currentChapter}-${verseToHighlight.verse}`,
-        bookId: currentBook.id,
-        chapter: currentChapter,
-        verse: verseToHighlight.verse,
-        color,
-        createdAt: new Date().toISOString(),
-      };
-      await saveHighlight(newHL);
-      setHighlights((prev) => [...prev.filter((h) => h.id !== newHL.id), newHL]);
+    try {
+      const existing = highlights.find(
+        (h) => h.bookId === currentBook.id && h.chapter === currentChapter && h.verse === verseToHighlight.verse
+      );
 
-      const colorObj = HIGHLIGHT_COLORS.find(c => c.id === color);
-      const colorName = colorObj ? colorObj.name : color;
-      const destination = auth.currentUser ? 'e sincronizado no Firebase' : 'salvo no armazenamento local';
-      showToast(`Versículo ${verseToHighlight.verse} destacado em ${colorName} (${destination})!`);
+      if (existing && existing.color === color) {
+        await removeHighlight(existing.id);
+        setHighlights((prev) => prev.filter((h) => h.id !== existing.id));
+        showToast(`Destaque removido do versículo ${verseToHighlight.verse}`);
+      } else {
+        const newHL: UserHighlight = {
+          id: `${currentBook.id}-${currentChapter}-${verseToHighlight.verse}`,
+          bookId: currentBook.id,
+          chapter: currentChapter,
+          verse: verseToHighlight.verse,
+          color,
+          createdAt: new Date().toISOString(),
+        };
+        await saveHighlight(newHL);
+        setHighlights((prev) => [...prev.filter((h) => h.id !== newHL.id), newHL]);
+
+        const colorObj = HIGHLIGHT_COLORS.find(c => c.id === color);
+        const colorName = colorObj ? colorObj.name : color;
+        const destination = auth.currentUser ? 'e sincronizado no Firebase' : 'salvo no armazenamento local';
+        showToast(`Versículo ${verseToHighlight.verse} destacado em ${colorName} (${destination})!`);
+      }
+    } catch (err) {
+      console.error('Error toggling highlight:', err);
+      showToast('O destaque foi salvo no dispositivo.');
     }
     setLongPressedVerse(null);
   };
 
   const handleRemoveHighlight = async (verseNum: number) => {
-    const existing = highlights.find(
-      (h) => h.bookId === currentBook.id && h.chapter === currentChapter && h.verse === verseNum
-    );
-    if (existing) {
-      await removeHighlight(existing.id);
-      setHighlights((prev) => prev.filter((h) => h.id !== existing.id));
-      showToast(`Destaque removido do versículo ${verseNum}`);
+    try {
+      const existing = highlights.find(
+        (h) => h.bookId === currentBook.id && h.chapter === currentChapter && h.verse === verseNum
+      );
+      if (existing) {
+        await removeHighlight(existing.id);
+        setHighlights((prev) => prev.filter((h) => h.id !== existing.id));
+        showToast(`Destaque removido do versículo ${verseNum}`);
+      }
+    } catch (err) {
+      console.error('Error removing highlight:', err);
     }
   };
 
@@ -832,14 +861,12 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
               <div className="space-y-4 animate-fade-in">
                 {/* Art Image Frame with absolute positioning and custom labels */}
                 <div className="relative rounded-2xl overflow-hidden border border-[#E7DECF]/85 dark:border-stone-800 shadow-xs bg-stone-100 dark:bg-stone-900 aspect-video group">
-                  <img
+                  <ImageWithSkeleton
                     src={chapterArt.imageUrl}
                     alt={chapterArt.title}
-                    referrerPolicy="no-referrer"
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    loading="lazy"
                   />
-                  <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
+                  <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap z-10">
                     <span className="px-2.5 py-1 rounded-full bg-[#1C1A18]/85 text-[#F7F1E5] font-sans text-[9px] font-extrabold uppercase tracking-wider border border-[#E7DECF]/15 shadow-sm backdrop-blur-xs flex items-center gap-1">
                       <Palette className="w-2.5 h-2.5 text-[#D4A24C]" />
                       {chapterArt.style}
@@ -983,11 +1010,25 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
         )}
       </div>
 
-      {/* 3. Sacred Editorial Scriptures text flow (Image 5 style) */}
+      {/* 3. Sacred Editorial Scriptures text flow */}
       {loading ? (
-        <div className="py-24 text-center space-y-3">
-          <div className="w-6 h-6 border-2 border-[#3E5641] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs font-serif italic text-stone-500">Buscando o texto...</p>
+        <div className={`rounded-3xl p-6 md:p-8 shadow-2xs space-y-5 ${getThemeContainerClass(settings.theme)}`}>
+          <div className="flex items-center justify-between border-b border-theme/40 pb-3">
+            <div className="h-4 w-32 rounded-lg skeleton-shimmer" />
+            <div className="h-4 w-16 rounded-lg skeleton-shimmer" />
+          </div>
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((idx) => (
+              <div key={idx} className="p-3 rounded-2xl bg-theme-app/40 space-y-2 border border-theme/20">
+                <div className="flex items-center gap-2">
+                  <div className="h-3.5 w-6 rounded skeleton-shimmer" />
+                  <div className="h-3.5 w-[85%] rounded skeleton-shimmer" />
+                </div>
+                <div className="h-3.5 w-[92%] rounded skeleton-shimmer ml-8" />
+                <div className="h-3.5 w-[60%] rounded skeleton-shimmer ml-8" />
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         <div className={`rounded-3xl p-6 md:p-8 shadow-2xs space-y-4 font-serif ${getThemeContainerClass(settings.theme)}`}>
@@ -1253,7 +1294,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
         <VerseShareModal
           verse={shareVerseModal}
           bookName={currentBook.name}
-          chapter={currentChapter}
+          version={settings.version}
           onClose={() => setShareVerseModal(null)}
         />
       )}

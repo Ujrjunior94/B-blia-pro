@@ -89,27 +89,27 @@ export const WordStudyModal: React.FC<WordStudyModalProps> = ({ word, onClose })
           </div>
 
           {/* Lexicon attributes table */}
-          <div className="rounded-2xl border border-[#E7DECF] dark:border-stone-850 overflow-hidden text-xs bg-[#FFFDF8]">
+          <div className="rounded-2xl border border-[#E7DECF] dark:border-stone-800 overflow-hidden text-xs bg-[#FFFDF8] dark:bg-stone-900">
             <table className="w-full text-left border-collapse font-serif">
               <tbody>
-                <tr className="border-b border-[#E7DECF]">
-                  <td className="px-4 py-3 font-sans font-bold text-stone-500 bg-[#F7F1E5]/30 w-32 uppercase text-[9px] tracking-wider">Strong's</td>
+                <tr className="border-b border-[#E7DECF] dark:border-stone-800">
+                  <td className="px-4 py-3 font-sans font-bold text-stone-500 dark:text-stone-400 bg-[#F7F1E5]/30 dark:bg-stone-800/40 w-32 uppercase text-[9px] tracking-wider">Strong's</td>
                   <td className="px-4 py-3 font-mono font-bold text-[#3E5641] dark:text-[#D4A24C]">{strongNum}</td>
                 </tr>
-                <tr className="border-b border-[#E7DECF]">
-                  <td className="px-4 py-3 font-sans font-bold text-stone-500 bg-[#F7F1E5]/30 uppercase text-[9px] tracking-wider">Transliteração</td>
-                  <td className="px-4 py-3 font-bold italic">{translit}</td>
+                <tr className="border-b border-[#E7DECF] dark:border-stone-800">
+                  <td className="px-4 py-3 font-sans font-bold text-stone-500 dark:text-stone-400 bg-[#F7F1E5]/30 dark:bg-stone-800/40 uppercase text-[9px] tracking-wider">Transliteração</td>
+                  <td className="px-4 py-3 font-bold italic dark:text-stone-200">{translit}</td>
                 </tr>
-                <tr className="border-b border-[#E7DECF]">
-                  <td className="px-4 py-3 font-sans font-bold text-stone-500 bg-[#F7F1E5]/30 uppercase text-[9px] tracking-wider">Categoria</td>
-                  <td className="px-4 py-3 text-stone-700">{category}</td>
+                <tr className="border-b border-[#E7DECF] dark:border-stone-800">
+                  <td className="px-4 py-3 font-sans font-bold text-stone-500 dark:text-stone-400 bg-[#F7F1E5]/30 dark:bg-stone-800/40 uppercase text-[9px] tracking-wider">Categoria</td>
+                  <td className="px-4 py-3 text-stone-700 dark:text-stone-300">{category}</td>
                 </tr>
-                <tr className="border-b border-[#E7DECF]">
-                  <td className="px-4 py-3 font-sans font-bold text-stone-500 bg-[#F7F1E5]/30 uppercase text-[9px] tracking-wider">Significados</td>
-                  <td className="px-4 py-3 text-stone-800 font-serif leading-relaxed">{gloss}</td>
+                <tr className="border-b border-[#E7DECF] dark:border-stone-800">
+                  <td className="px-4 py-3 font-sans font-bold text-stone-500 dark:text-stone-400 bg-[#F7F1E5]/30 dark:bg-stone-800/40 uppercase text-[9px] tracking-wider">Significados</td>
+                  <td className="px-4 py-3 text-stone-800 dark:text-stone-200 font-serif leading-relaxed">{gloss}</td>
                 </tr>
                 <tr>
-                  <td className="px-4 py-3 font-sans font-bold text-stone-500 bg-[#F7F1E5]/30 uppercase text-[9px] tracking-wider">Ocorrências no NT</td>
+                  <td className="px-4 py-3 font-sans font-bold text-stone-500 dark:text-stone-400 bg-[#F7F1E5]/30 dark:bg-stone-800/40 uppercase text-[9px] tracking-wider">Ocorrências no NT</td>
                   <td className="px-4 py-3 text-[#D4A24C] font-sans font-bold">{occurrences}</td>
                 </tr>
               </tbody>

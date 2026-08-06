@@ -1,6 +1,7 @@
 import { db, doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc } from './firebase';
 import { localDB } from '../utils/db';
 import { UserBookmark, UserHighlight, UserNote, UserProgress } from '../types';
+import { logError } from './errorLogger';
 
 export interface SyncStats {
   highlightsSynced: number;
@@ -36,15 +37,21 @@ export async function initializeUserProgressInFirebase(userId: string): Promise<
     updatedAt: new Date().toISOString()
   };
 
-  // 2. Persist zero progress directly to Firebase Firestore
-  await setDoc(doc(db, 'userProgress', userId), initialProgress);
-  await setDoc(doc(db, 'desafioProgress', userId), {
-    completedDays: [],
-    weeklyNotes: {},
-    weeklyPrayers: {},
-    userId,
-    updatedAt: new Date().toISOString()
-  });
+  try {
+    // 2. Persist zero progress directly to Firebase Firestore
+    await setDoc(doc(db, 'userProgress', userId), initialProgress);
+    await setDoc(doc(db, 'desafioProgress', userId), {
+      completedDays: [],
+      weeklyNotes: {},
+      weeklyPrayers: {},
+      userId,
+      updatedAt: new Date().toISOString()
+    });
+    logError('sync', `Progresso zerado inicializado no Firebase para o usuário ${userId}`, undefined, { userId }, 'info');
+  } catch (error) {
+    logError('sync', `Falha ao inicializar progresso inicial do usuário ${userId} no Firebase`, error, { userId }, 'error');
+    throw error;
+  }
 
   return initialProgress;
 }
@@ -53,12 +60,17 @@ export async function initializeUserProgressInFirebase(userId: string): Promise<
  * Saves or updates user progress in Firebase Firestore for a specific userId.
  */
 export async function saveUserProgressToFirebase(userId: string, progress: Partial<UserProgress>): Promise<void> {
-  const userProgressRef = doc(db, 'userProgress', userId);
-  await setDoc(userProgressRef, {
-    ...progress,
-    userId,
-    updatedAt: new Date().toISOString()
-  }, { merge: true });
+  try {
+    const userProgressRef = doc(db, 'userProgress', userId);
+    await setDoc(userProgressRef, {
+      ...progress,
+      userId,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+  } catch (error) {
+    logError('sync', `Falha ao salvar progresso do usuário no Firebase`, error, { userId, progress }, 'error');
+    throw error;
+  }
 }
 
 /**
@@ -73,6 +85,8 @@ export async function syncUserData(userId: string): Promise<SyncStats> {
     desafioSynced: false,
     userProgressInitialized: false,
   };
+
+  logError('sync', `Iniciando sincronização para o usuário: ${userId}`, undefined, { userId }, 'info');
 
   try {
     // 1. Sync Highlights
@@ -254,7 +268,10 @@ export async function syncUserData(userId: string): Promise<SyncStats> {
       }
     }
 
+    logError('sync', `Sincronização concluída com sucesso para o usuário ${userId}`, undefined, { stats }, 'info');
+
   } catch (error) {
+    logError('sync', `Erro na sincronização de dados do usuário ${userId}`, error, { userId, stats }, 'error');
     console.error('Error during data synchronization:', error);
     throw error;
   }

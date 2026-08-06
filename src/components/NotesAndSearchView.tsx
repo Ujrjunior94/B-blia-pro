@@ -33,9 +33,9 @@ export const NotesAndSearchView: React.FC<NotesAndSearchViewProps> = ({ onOpenVe
   const [bookmarks, setBookmarks] = useState<UserBookmark[]>([]);
 
   useEffect(() => {
-    localDB.getNotes().then(setNotes);
-    localDB.getHighlights().then(setHighlights);
-    localDB.getBookmarks().then(setBookmarks);
+    localDB.getNotes().then(setNotes).catch(err => console.error('Error fetching notes:', err));
+    localDB.getHighlights().then(setHighlights).catch(err => console.error('Error fetching highlights:', err));
+    localDB.getBookmarks().then(setBookmarks).catch(err => console.error('Error fetching bookmarks:', err));
 
     let hlUnsub: (() => void) | null = null;
     const authUnsub = onAuthStateChanged(auth, (user) => {

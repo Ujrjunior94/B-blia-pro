@@ -217,7 +217,7 @@ export const CharactersView: React.FC = () => {
             {TIMELINE_EVENTS.map((event) => (
               <div key={event.id} className="relative group">
                 <div className="absolute -left-[31px] top-1.5 w-4 h-4 rounded-full bg-amber-600 border-4 border-theme-card group-hover:scale-125 transition-all" />
-                <div className="p-5 rounded-2xl bg-theme-app border border-theme hover:border-amber-500/30 transition-all space-y-2">
+                <div className="p-5 rounded-2xl bg-theme-app border border-theme hover:border-amber-500/30 transition-all space-y-2 cls-card-md">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-300 text-[10px] font-bold">
                       {event.year} — {event.period}
@@ -250,7 +250,7 @@ export const CharactersView: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {GENEALOGY_NODES.map((node) => (
-              <div key={node.id} className={`p-4 rounded-2xl border transition-all ${node.isMessianicLine ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-500/30' : 'bg-theme-app border-theme'}`}>
+              <div key={node.id} className={`p-4 rounded-2xl border transition-all cls-card-sm ${node.isMessianicLine ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-500/30' : 'bg-theme-app border-theme'}`}>
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
                     Geração #{node.generationOrder}
@@ -351,7 +351,7 @@ export const CharactersView: React.FC = () => {
                   <div
                     key={char.id}
                     onClick={() => setSelectedCharId(char.id)}
-                    className={`w-full p-4 rounded-2xl border text-left flex items-center justify-between gap-3 transition-all cursor-pointer ${
+                    className={`w-full p-4 rounded-2xl border text-left flex items-center justify-between gap-3 transition-all cursor-pointer cls-card-sm ${
                       isSelected
                         ? 'bg-theme-accent/10 border-theme-accent shadow-sm ring-1 ring-theme-accent/20'
                         : 'bg-theme-app border-theme hover:bg-theme-card-hover'

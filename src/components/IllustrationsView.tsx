@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Compass, BookOpen, Scroll, HelpCircle, Star, ArrowLeft, ArrowRight, Eye } from 'lucide-react';
+import { ImageWithSkeleton } from './ImageWithSkeleton';
 
 interface BiblicalScene {
   id: string;
@@ -173,14 +174,13 @@ export const IllustrationsView: React.FC<IllustrationsViewProps> = ({ onOpenPass
           <div
             key={scene.id}
             onClick={() => setSelectedScene(scene)}
-            className="rounded-3xl border border-[#E7DECF] dark:border-stone-800 bg-[#FFFDF8] dark:bg-[#1C1A18] overflow-hidden shadow-2xs hover:border-[#D4A24C] transition-all cursor-pointer group"
+            className="rounded-3xl border border-[#E7DECF] dark:border-stone-800 bg-[#FFFDF8] dark:bg-[#1C1A18] overflow-hidden shadow-2xs hover:border-[#D4A24C] transition-all cursor-pointer group cls-card-lg"
           >
             {/* Visual Header Image Container with referer policy */}
             <div className="relative h-44 overflow-hidden bg-stone-100 dark:bg-stone-900">
-              <img
+              <ImageWithSkeleton
                 src={scene.imageUrl}
                 alt={scene.title}
-                referrerPolicy="no-referrer"
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               {/* Absolutes and labels */}
@@ -257,13 +257,12 @@ export const IllustrationsView: React.FC<IllustrationsViewProps> = ({ onOpenPass
             {/* Scrollable Context sections */}
             <div className="flex-1 overflow-y-auto no-scrollbar">
               <div className="relative h-44 bg-stone-900">
-                <img
+                <ImageWithSkeleton
                   src={selectedScene.imageUrl}
                   alt={selectedScene.title}
-                  referrerPolicy="no-referrer"
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 to-transparent z-10" />
                 <div className="absolute bottom-4 left-5 right-5 text-white">
                   <span className="text-[10px] font-sans font-extrabold text-amber-200 uppercase tracking-widest">
                     {selectedScene.reference}

@@ -73,6 +73,7 @@ export async function fetchUserHighlightsFromFirebase(userId: string): Promise<U
   } catch (error) {
     console.error('Error fetching highlights from Firebase:', error);
     handleFirestoreError(error, OperationType.GET, highlightsPath);
+    return [];
   }
 }
 

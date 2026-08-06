@@ -46,8 +46,10 @@ export function App() {
   const [settings, setSettings] = useState<ReaderSettings>({
     version: 'ARC',
     fontSize: 18,
-    fontFamily: 'Serif',
+    fontFamily: 'serif',
     theme: theme as any,
+    lineHeight: 'relaxed',
+    showVerseNumbers: true,
     showStrong: true,
     showInterlinear: true,
     audioSpeed: 1.0,
@@ -135,7 +137,7 @@ export function App() {
       )}
 
       {/* Main View Router Content */}
-      <main className={`${isFocusModeActive ? 'pb-6 pt-2' : 'pb-24'} overflow-x-hidden`}>
+      <main className={`${isFocusModeActive ? 'pb-6 pt-2' : 'pb-28 sm:pb-32'} overflow-x-hidden overflow-y-auto min-h-[calc(100vh-80px)] w-full`}>
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -143,6 +145,7 @@ export function App() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.15, ease: 'easeInOut' }}
+            className="w-full"
           >
             <Suspense fallback={<ComponentFallback />}>
               {activeTab === 'home' && (
@@ -254,7 +257,7 @@ export function App() {
 
       {/* Premium Mobile-First Bottom Navigation Bar - Hidden in Focus Reader Mode */}
       {!isFocusModeActive && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#FFFDF8]/95 dark:bg-[#1A1816]/95 backdrop-blur-md border-t border-[#E7DECF] dark:border-stone-800 shadow-[0_-4px_24px_rgba(31,27,22,0.03)] px-4 py-2 flex items-center justify-around">
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#FFFDF8]/95 dark:bg-[#1A1816]/95 backdrop-blur-md border-t border-[#E7DECF] dark:border-stone-800 shadow-[0_-4px_24px_rgba(31,27,22,0.03)] px-0.5 min-[360px]:px-1 sm:px-4 pt-1 sm:pt-2 pb-[calc(0.25rem+env(safe-area-inset-bottom,0px))] sm:pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] flex items-center justify-between sm:justify-around max-w-7xl mx-auto">
           {[
             { id: 'home', label: 'Início', icon: Compass },
             { id: 'reader', label: 'Bíblia', icon: BookOpen },
@@ -269,22 +272,25 @@ export function App() {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id as any)}
-                className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all duration-200 relative group"
+                className="flex flex-col items-center justify-center py-1 px-0.5 sm:px-2 rounded-xl transition-all duration-200 ease-out relative group flex-1 min-w-0 cursor-pointer overflow-hidden"
               >
                 <div
-                  className={`p-1 rounded-lg transition-all duration-200 ${
+                  className={`p-0.5 sm:p-1 rounded-lg transition-transform duration-200 ease-out transform shrink-0 ${
                     isActive
-                      ? 'text-[#3E5641] dark:text-[#D4A24C] scale-110'
-                      : 'text-theme-muted group-hover:text-theme-primary'
+                      ? 'text-[#3E5641] dark:text-[#D4A24C] scale-105'
+                      : 'text-theme-muted group-hover:text-theme-primary group-hover:scale-105 scale-100'
                   }`}
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon
+                    className="w-4 h-4 sm:w-4.5 sm:h-4.5 transition-transform duration-200 ease-out shrink-0"
+                    strokeWidth={isActive ? 2.2 : 1.8}
+                  />
                 </div>
                 <span
-                  className={`text-[10px] font-sans font-bold tracking-tight mt-0.5 transition-colors duration-200 ${
+                  className={`text-[9px] min-[360px]:text-[9.5px] sm:text-[10px] font-sans tracking-tight mt-0.5 leading-tight truncate w-full text-center transition-colors duration-200 ease-out ${
                     isActive
-                      ? 'text-[#3E5641] dark:text-[#D4A24C]'
-                      : 'text-theme-muted group-hover:text-theme-primary'
+                      ? 'text-[#3E5641] dark:text-[#D4A24C] font-bold'
+                      : 'text-theme-muted group-hover:text-theme-primary font-medium'
                   }`}
                 >
                   {item.label}

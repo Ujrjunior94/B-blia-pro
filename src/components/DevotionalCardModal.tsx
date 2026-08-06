@@ -328,7 +328,7 @@ export const DevotionalCardModal: React.FC<DevotionalCardModalProps> = ({
         </div>
 
         {/* Card Interactive Preview Stage */}
-        <div className="flex-1 overflow-y-auto pr-1 space-y-4 min-h-[300px]">
+        <div className="flex-1 overflow-y-auto pr-1 space-y-4 min-h-[180px] sm:min-h-[260px]">
           {isLoading ? (
             <div className="w-full h-80 rounded-3xl bg-stone-900 flex flex-col items-center justify-center p-6 text-center text-stone-200 space-y-4 animate-pulse relative overflow-hidden border border-amber-500/30">
               <RefreshCw className="w-10 h-10 text-[#D4A24C] animate-spin" />

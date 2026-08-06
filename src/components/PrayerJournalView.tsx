@@ -316,7 +316,7 @@ export const PrayerJournalView: React.FC = () => {
             return (
               <div
                 key={prayer.id}
-                className={`p-5 rounded-3xl border transition-all space-y-3 relative group ${
+                className={`p-5 rounded-3xl border transition-all space-y-3 relative group cls-card-md ${
                   prayer.isAnswered
                     ? 'bg-emerald-500/5 dark:bg-emerald-950/20 border-emerald-500/30 shadow-xs'
                     : 'bg-[#FFFDF8] dark:bg-[#1A1816] border-[#E7DECF] dark:border-stone-800 hover:shadow-md'

@@ -902,7 +902,7 @@ export const MonthlyDevotionalsView: React.FC<MonthlyDevotionalsViewProps> = ({ 
       {/* 2. Theme Card Info & Focus of the Month */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left Side: Month Summary & Theological Focus */}
-        <div className="md:col-span-1 p-5 rounded-3xl bg-[#FFFDF8] dark:bg-[#1C1A18] border border-theme space-y-4 shadow-3xs">
+        <div className="md:col-span-1 p-5 rounded-3xl bg-[#FFFDF8] dark:bg-[#1C1A18] border border-theme space-y-4 shadow-3xs cls-card-lg">
           <div className="space-y-1">
             <span className="text-[10px] font-sans font-extrabold text-[#D4A24C] uppercase tracking-widest block">
               Tema de {activeTheme.monthName}

@@ -34,15 +34,22 @@ export const InterlinearReader: React.FC<InterlinearReaderProps> = ({
     let isMounted = true;
     setLoading(true);
 
-    fetchChapterVerses(currentBook.id, currentChapter, 'INTERLINEAR').then((data) => {
-      if (isMounted) {
-        setVerses(data);
-        setLoading(false);
-        if (data && data.length > 0 && data[0].originalWords && data[0].originalWords.length > 0) {
-          setSelectedWord(data[0].originalWords[0]);
+    fetchChapterVerses(currentBook.id, currentChapter, 'INTERLINEAR')
+      .then((data) => {
+        if (isMounted) {
+          setVerses(data);
+          setLoading(false);
+          if (data && data.length > 0 && data[0].originalWords && data[0].originalWords.length > 0) {
+            setSelectedWord(data[0].originalWords[0]);
+          }
         }
-      }
-    });
+      })
+      .catch((err) => {
+        if (isMounted) {
+          console.error('Error fetching interlinear verses:', err);
+          setLoading(false);
+        }
+      });
 
     return () => {
       isMounted = false;
