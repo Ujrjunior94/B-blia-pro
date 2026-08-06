@@ -13,14 +13,15 @@ import { AiTheologyAssistant } from './components/AiTheologyAssistant';
 import { BookChapterSelector } from './components/BookChapterSelector';
 import { OfflineManagerModal } from './components/OfflineManagerModal';
 import { MonthlyDevotionalsView } from './components/MonthlyDevotionalsView';
+import { PrayerJournalView } from './components/PrayerJournalView';
 import { BibleBook, ReaderSettings } from './types';
 import { BIBLE_BOOKS, getBookById } from './data/bibleBooks';
 import { useTheme } from './styles/themeConstants';
-import { Compass, BookOpen, Layers, Sparkles, Flame, Award, User } from 'lucide-react';
+import { Compass, BookOpen, Layers, Sparkles, Flame, Award, User, HeartHandshake } from 'lucide-react';
 
 export function App() {
   const { theme, setTheme } = useTheme();
-  const [activeTab, setActiveTab] = useState<'home' | 'reader' | 'interlinear' | 'dictionary' | 'characters' | 'study' | 'challenge' | 'notes' | 'ai' | 'devotional'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'reader' | 'interlinear' | 'dictionary' | 'characters' | 'study' | 'challenge' | 'notes' | 'ai' | 'devotional' | 'prayers'>('home');
   const [currentBook, setCurrentBook] = useState<BibleBook>(BIBLE_BOOKS[0]); // Genesis
   const [currentChapter, setCurrentChapter] = useState<number>(1);
   const [isBookSelectorOpen, setIsBookSelectorOpen] = useState<boolean>(false);
@@ -193,6 +194,10 @@ export function App() {
               />
             )}
 
+            {activeTab === 'prayers' && (
+              <PrayerJournalView />
+            )}
+
             {activeTab === 'notes' && (
               <NotesAndSearchView
                 onOpenVerse={(bookId, chapter) => {
@@ -236,6 +241,7 @@ export function App() {
           {[
             { id: 'home', label: 'Início', icon: Compass },
             { id: 'reader', label: 'Bíblia', icon: BookOpen },
+            { id: 'prayers', label: 'Oração', icon: HeartHandshake },
             { id: 'challenge', label: 'Jornada', icon: Award },
             { id: 'study', label: 'Estudo', icon: Sparkles },
             { id: 'ai', label: 'Perfil', icon: User },

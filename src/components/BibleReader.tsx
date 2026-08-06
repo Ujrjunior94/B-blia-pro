@@ -43,6 +43,7 @@ import { BibleBook, BibleVersionCode, ReaderSettings, UserBookmark, UserHighligh
 import { fetchChapterVerses, BIBLE_VERSIONS } from '../services/bibleService';
 import { localDB } from '../utils/db';
 import { VerseShareModal } from './VerseShareModal';
+import { DevotionalCardModal } from './DevotionalCardModal';
 import { saveHighlight, removeHighlight, subscribeUserHighlights } from '../services/highlightService';
 import { auth, onAuthStateChanged } from '../services/firebase';
 
@@ -117,8 +118,51 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   const [isFirebaseSynced, setIsFirebaseSynced] = useState<boolean>(false);
   const [showVersionModal, setShowVersionModal] = useState<boolean>(false);
   const [showAppearanceModal, setShowAppearanceModal] = useState<boolean>(false);
+  const [devotionalModalVerse, setDevotionalModalVerse] = useState<Verse | null>(null);
   const [isAutoScrolling, setIsAutoScrolling] = useState<boolean>(false);
   const [autoScrollSpeed, setAutoScrollSpeed] = useState<number>(2); // 1 to 5 speed level
+
+  // Long-press detection states for verses
+  const longPressTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const [longPressedVerse, setLongPressedVerse] = useState<Verse | null>(null);
+  const touchStartPosRef = React.useRef<{ x: number; y: number } | null>(null);
+
+  const handleStartPressVerse = (v: Verse, e: React.TouchEvent | React.MouseEvent) => {
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    touchStartPosRef.current = { x: clientX, y: clientY };
+
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+
+    longPressTimerRef.current = setTimeout(() => {
+      if (window.navigator && 'vibrate' in window.navigator) {
+        try { window.navigator.vibrate(50); } catch (_) {}
+      }
+      setSelectedVerse(v);
+      setLongPressedVerse(v);
+      showToast(`Versículo ${v.verse} selecionado por clique longo! Escolha a cor do destaque.`);
+    }, 450);
+  };
+
+  const handleMovePressVerse = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!touchStartPosRef.current) return;
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const dist = Math.hypot(clientX - touchStartPosRef.current.x, clientY - touchStartPosRef.current.y);
+
+    if (dist > 10 && longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleEndPressVerse = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    touchStartPosRef.current = null;
+  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -295,22 +339,23 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
     };
   }, [currentBook.id, currentChapter, settings.version]);
 
-  const handleToggleHighlight = async (color: string) => {
-    if (!selectedVerse) return;
+  const handleToggleHighlight = async (color: string, targetVerse?: Verse) => {
+    const verseToHighlight = targetVerse || selectedVerse;
+    if (!verseToHighlight) return;
     const existing = highlights.find(
-      (h) => h.bookId === currentBook.id && h.chapter === currentChapter && h.verse === selectedVerse.verse
+      (h) => h.bookId === currentBook.id && h.chapter === currentChapter && h.verse === verseToHighlight.verse
     );
 
     if (existing && existing.color === color) {
       await removeHighlight(existing.id);
       setHighlights((prev) => prev.filter((h) => h.id !== existing.id));
-      showToast(`Destaque removido do versículo ${selectedVerse.verse}`);
+      showToast(`Destaque removido do versículo ${verseToHighlight.verse}`);
     } else {
       const newHL: UserHighlight = {
-        id: `${currentBook.id}-${currentChapter}-${selectedVerse.verse}`,
+        id: `${currentBook.id}-${currentChapter}-${verseToHighlight.verse}`,
         bookId: currentBook.id,
         chapter: currentChapter,
-        verse: selectedVerse.verse,
+        verse: verseToHighlight.verse,
         color,
         createdAt: new Date().toISOString(),
       };
@@ -319,9 +364,10 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
 
       const colorObj = HIGHLIGHT_COLORS.find(c => c.id === color);
       const colorName = colorObj ? colorObj.name : color;
-      const destination = auth.currentUser ? 'e sincronizado no Firebase' : 'no armazenamento local';
-      showToast(`Versículo ${selectedVerse.verse} destacado (${colorName}) ${destination}!`);
+      const destination = auth.currentUser ? 'e sincronizado no Firebase' : 'salvo no armazenamento local';
+      showToast(`Versículo ${verseToHighlight.verse} destacado em ${colorName} (${destination})!`);
     }
+    setLongPressedVerse(null);
   };
 
   const handleRemoveHighlight = async (verseNum: number) => {
@@ -489,7 +535,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   };
 
   return (
-    <div className="max-w-md mx-auto px-4 py-5 space-y-4 bg-[#F7F1E5] dark:bg-[#151311] min-h-screen text-[#1F1B16] dark:text-stone-200 pb-24 relative">
+    <div className="max-w-3xl mx-auto px-3 sm:px-6 py-5 space-y-4 bg-[#F7F1E5] dark:bg-[#151311] min-h-screen text-[#1F1B16] dark:text-stone-200 pb-24 relative">
       
       {/* 1. Header Navigation Bar (Image 5) */}
       <div className="flex items-center justify-between pb-2">
@@ -538,7 +584,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
         
         {/* Version Switcher Bar */}
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-[11px] font-sans font-bold uppercase tracking-wider text-[#5F5A52]">
+          <div className="flex items-center justify-between text-[11px] font-sans font-bold uppercase tracking-wider text-[#5F5A52] dark:text-stone-300">
             <span>Tradução da Bíblia</span>
             <button
               onClick={() => setShowVersionModal(true)}
@@ -970,13 +1016,23 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
               return (
                 <div
                   key={v.verse}
-                  onClick={() => setSelectedVerse(v)}
-                  className={`p-2 rounded-2xl transition-all cursor-pointer relative ${
+                  onClick={() => {
+                    if (!longPressedVerse) {
+                      setSelectedVerse(v);
+                    }
+                  }}
+                  onTouchStart={(e) => handleStartPressVerse(v, e)}
+                  onTouchMove={handleMovePressVerse}
+                  onTouchEnd={handleEndPressVerse}
+                  onMouseDown={(e) => handleStartPressVerse(v, e)}
+                  onMouseMove={handleMovePressVerse}
+                  onMouseUp={handleEndPressVerse}
+                  className={`p-2.5 rounded-2xl transition-all cursor-pointer relative select-none ${
                     hasHighlight && hlColorObj
                       ? hlColorObj.containerStyle
                       : isSelected
-                      ? 'bg-[#E7DECF]/40 dark:bg-stone-800/60'
-                      : ''
+                      ? 'bg-[#E7DECF]/40 dark:bg-stone-800/60 ring-2 ring-[#D4A24C]/60'
+                      : 'hover:bg-stone-100/50 dark:hover:bg-stone-850/50'
                   }`}
                 >
                   <div className="flex items-start gap-1">
@@ -1072,6 +1128,14 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                           )}
                         </span>
 
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setDevotionalModalVerse(v); }}
+                          title="Gerar Card Devocional com IA para Redes Sociais"
+                          className="p-1.5 px-2.5 rounded-lg text-[10px] font-sans font-extrabold bg-[#3E5641] hover:bg-[#324534] text-white flex items-center gap-1 cursor-pointer shadow-xs"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+                          <span>Card IA</span>
+                        </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleToggleBookmark(v); }}
                           title="Marcar versículo"
@@ -1478,6 +1542,106 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
           )}
           <span>{toastMessage}</span>
         </div>
+      )}
+
+      {/* Dedicated Long-Press Verse Highlighting Modal */}
+      {longPressedVerse && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-[#FFFDF8] dark:bg-[#1C1A18] border border-[#E7DECF] dark:border-stone-800 rounded-3xl max-w-sm w-full p-5 shadow-2xl space-y-4 relative">
+            <div className="flex items-center justify-between border-b border-stone-200 dark:border-stone-800 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-2xl bg-amber-500/10 text-[#D4A24C]">
+                  <Highlighter className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="font-serif font-extrabold text-sm text-[#1F1B16] dark:text-stone-100">
+                    Destacar Versículo {longPressedVerse.verse}
+                  </h4>
+                  <p className="text-[10px] font-sans text-stone-500 uppercase tracking-wider font-bold">
+                    {currentBook.name} {currentChapter}:{longPressedVerse.verse} • Clique Longo
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setLongPressedVerse(null)}
+                className="p-1.5 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-400 hover:text-stone-700 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-[#F7F1E5]/60 dark:bg-stone-900 border border-[#E7DECF] dark:border-stone-800">
+              <p className="text-xs font-serif italic text-stone-700 dark:text-stone-300 leading-relaxed line-clamp-3">
+                "{longPressedVerse.text}"
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-[10px] font-sans font-extrabold uppercase tracking-wider text-stone-500 dark:text-stone-400 block">
+                Escolha a Cor do Destaque:
+              </span>
+              <div className="grid grid-cols-5 gap-2">
+                {HIGHLIGHT_COLORS.map((col) => {
+                  const isCurrentHL = highlights.some(
+                    (h) => h.bookId === currentBook.id && h.chapter === currentChapter && h.verse === longPressedVerse.verse && h.color === col.id
+                  );
+                  return (
+                    <button
+                      key={col.id}
+                      onClick={() => handleToggleHighlight(col.id, longPressedVerse)}
+                      className={`flex flex-col items-center gap-1.5 p-2 rounded-2xl hover:bg-stone-100 dark:hover:bg-stone-850 transition-all cursor-pointer group border ${
+                        isCurrentHL ? 'border-stone-900 dark:border-stone-100 bg-stone-100 dark:bg-stone-800' : 'border-transparent'
+                      }`}
+                    >
+                      <div className={`w-7 h-7 rounded-full ${col.dotBg} shadow-xs group-hover:scale-115 transition-transform`} />
+                      <span className="text-[9px] font-sans font-extrabold text-stone-700 dark:text-stone-300">
+                        {col.name.split(' ')[0]}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                const targetV = longPressedVerse;
+                setLongPressedVerse(null);
+                setDevotionalModalVerse(targetV);
+              }}
+              className="w-full py-3 rounded-2xl bg-[#3E5641] hover:bg-[#324534] text-white font-sans font-extrabold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+            >
+              <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+              <span>Gerar Card Devocional com IA</span>
+            </button>
+
+            {highlights.some(h => h.bookId === currentBook.id && h.chapter === currentChapter && h.verse === longPressedVerse.verse) && (
+              <button
+                onClick={() => {
+                  handleRemoveHighlight(longPressedVerse.verse);
+                  setLongPressedVerse(null);
+                }}
+                className="w-full py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-sans font-extrabold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer border border-rose-500/20"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Remover Destaque</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Devotional Card Modal */}
+      {devotionalModalVerse && (
+        <DevotionalCardModal
+          isOpen={!!devotionalModalVerse}
+          onClose={() => setDevotionalModalVerse(null)}
+          verseText={devotionalModalVerse.text}
+          bookName={currentBook.name}
+          chapter={currentChapter}
+          verseNum={devotionalModalVerse.verse}
+          versionCode={settings.version}
+        />
       )}
     </div>
   );

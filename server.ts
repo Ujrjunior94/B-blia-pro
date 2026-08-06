@@ -240,6 +240,108 @@ Forneça detalhes teológicos profundos de como os elementos visuais simbolizam 
     }
   });
 
+  // AI Verse Devotional Card Generator Endpoint
+  app.post('/api/theology/generate-verse-card', async (req, res) => {
+    try {
+      const { verseText, bookName, chapter, verseNum, style } = req.body;
+      if (!verseText || !bookName) {
+        res.status(400).json({ error: 'Texto do versículo e nome do livro são obrigatórios.' });
+        return;
+      }
+
+      const ai = getAiClient();
+      const styleName = style || 'Amanhecer Espiritual';
+
+      // 1. Generate prompt concept for background artwork
+      const promptText = `Crie o conceito visual de um fundo de card devocional para o versículo bíblico: "${verseText}" (${bookName} ${chapter}:${verseNum}). Estilo desejado: "${styleName}".
+A imagem deve ser um plano de fundo atmosférico, sereno, com espaço central adequado para sobreposição de texto, sem frases escancaradas nem marcas d'água.`;
+
+      const metadataResponse = await ai.models.generateContent({
+        model: 'gemini-3.6-flash',
+        contents: promptText,
+        config: {
+          systemInstruction: 'Você é um designer gráfico e artista sacro especializado em cards devocionais evangélicos de alta estética para redes sociais. Suas respostas devem ser em formato JSON válido.',
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              englishArtPrompt: {
+                type: Type.STRING,
+                description: 'A detailed prompt in English for generating a serene background image (landscape/nature/abstract/sacred art) suitable for placing text on top. Soft lighting, artistic, no written text or signatures.'
+              },
+              portugueseTitle: {
+                type: Type.STRING,
+                description: 'A short devotional title for this verse card (e.g. "Promessa de Paz").'
+              },
+              devotionalReflection: {
+                type: Type.STRING,
+                description: 'A 1-2 sentence inspiring devotional thought on this verse to accompany the social media post.'
+              },
+              unsplashSearchKeywords: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+                description: '3 English keywords for finding matching nature/spiritual photos if needed.'
+              }
+            },
+            required: ['englishArtPrompt', 'portugueseTitle', 'devotionalReflection', 'unsplashSearchKeywords']
+          }
+        }
+      });
+
+      const metadata = JSON.parse(metadataResponse.text || '{}');
+
+      // 2. Try real image generation with gemini-3.1-flash-lite-image
+      let imageBase64: string | null = null;
+      let usedRealGenerator = false;
+
+      try {
+        const imageGenResponse = await ai.models.generateContent({
+          model: 'gemini-3.1-flash-lite-image',
+          contents: {
+            parts: [{ text: metadata.englishArtPrompt || `A serene background illustration for bible verse ${bookName} ${chapter}:${verseNum}, style ${styleName}, soft atmospheric lighting, minimal texture, no text.` }]
+          },
+          config: {
+            imageConfig: {
+              aspectRatio: '9:16',
+            }
+          }
+        });
+
+        if (imageGenResponse.candidates?.[0]?.content?.parts) {
+          for (const part of imageGenResponse.candidates[0].content.parts) {
+            if (part.inlineData) {
+              imageBase64 = `data:image/png;base64,${part.inlineData.data}`;
+              usedRealGenerator = true;
+              break;
+            }
+          }
+        }
+      } catch (imgErr: any) {
+        console.warn('Real image generator failed or quota exceeded:', imgErr.message);
+      }
+
+      let finalImageUrl = imageBase64;
+      if (!finalImageUrl) {
+        const keywords = (metadata.unsplashSearchKeywords || ['nature', 'sunrise', 'peace']).join(',');
+        const seed = `${bookName.toLowerCase()}-${chapter}-${verseNum}`;
+        finalImageUrl = `https://images.unsplash.com/featured/1080x1920/?${encodeURIComponent(keywords)}&sig=${encodeURIComponent(seed)}`;
+      }
+
+      res.json({
+        success: true,
+        title: metadata.portugueseTitle || `${bookName} ${chapter}:${verseNum}`,
+        reflection: metadata.devotionalReflection || 'Meditação diária no poder e na graça da Palavra de Deus.',
+        imageUrl: finalImageUrl,
+        usedRealGenerator,
+        style: styleName
+      });
+
+    } catch (error: any) {
+      console.error('Erro ao gerar card de versículo:', error);
+      res.status(500).json({ error: error.message || 'Erro ao gerar card devocional.' });
+    }
+  });
+
   // Vite Middleware integration for development mode vs Production static serving
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Sparkles, BookMarked, Calendar, Search, Bot, Download, Moon, Sun, Layers, ShieldCheck, Book, Users, Compass, Flame, Scroll, User, LogIn, Settings } from 'lucide-react';
+import { BookOpen, Sparkles, BookMarked, Calendar, Search, Bot, Download, Moon, Sun, Layers, ShieldCheck, Book, Users, Compass, Flame, Scroll, User, LogIn, Settings, HeartHandshake } from 'lucide-react';
 import { ReaderSettings } from '../types';
 import { auth, onAuthStateChanged, db, doc, getDoc } from '../services/firebase';
 import { SettingsModal } from './SettingsModal';
 
 interface HeaderProps {
-  activeTab: 'home' | 'reader' | 'interlinear' | 'dictionary' | 'characters' | 'study' | 'challenge' | 'notes' | 'ai' | 'devotional';
-  setActiveTab: (tab: 'home' | 'reader' | 'interlinear' | 'dictionary' | 'characters' | 'study' | 'challenge' | 'notes' | 'ai' | 'devotional') => void;
+  activeTab: 'home' | 'reader' | 'interlinear' | 'dictionary' | 'characters' | 'study' | 'challenge' | 'notes' | 'ai' | 'devotional' | 'prayers';
+  setActiveTab: (tab: 'home' | 'reader' | 'interlinear' | 'dictionary' | 'characters' | 'study' | 'challenge' | 'notes' | 'ai' | 'devotional' | 'prayers') => void;
   settings: ReaderSettings;
   setSettings: React.Dispatch<React.SetStateAction<ReaderSettings>>;
   onOpenBookSelector: () => void;
@@ -171,6 +171,7 @@ export const Header: React.FC<HeaderProps> = ({
         {[
           { id: 'home', label: 'Início', icon: Compass, color: 'text-[#D4A24C]' },
           { id: 'reader', label: 'Leitor Bíblico', icon: BookOpen, color: 'text-amber-700' },
+          { id: 'prayers', label: 'Oração', icon: HeartHandshake, color: 'text-rose-600' },
           { id: 'devotional', label: 'Estudo Mensal', icon: Calendar, color: 'text-emerald-700' },
           { id: 'interlinear', label: 'Texto Original', icon: Layers, color: 'text-indigo-600' },
           { id: 'dictionary', label: 'Dicionário', icon: Book, color: 'text-emerald-600' },

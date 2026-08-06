@@ -67,7 +67,12 @@ export async function fetchChapterVerses(
             bookId: normalizedBookId,
             chapter,
             verse: v.verse,
-            text: v.text.trim(),
+            text: (v.text || '')
+              .replace(/<[^>]*>/g, '')
+              .replace(/\[\d+\]/g, '')
+              .replace(/\n/g, ' ')
+              .replace(/\s+/g, ' ')
+              .trim(),
           }));
 
           // Cache in IndexedDB for subsequent offline use!
@@ -107,6 +112,29 @@ export async function downloadFullVersionOffline(
         onProgress(pct, `${book.name} cap. ${c} (${completedChapters}/${totalChapters})`);
       }
     }
+  }
+}
+
+export const ALL_AVAILABLE_VERSION_CODES = ['ARC', 'NAA', 'NVI', 'ACF', 'KJA', 'INTERLINEAR', 'WLC', 'SBLGNT'];
+
+export async function downloadAllVersionsOffline(
+  onProgress?: (versionCode: string, pct: number, statusText: string) => void
+): Promise<void> {
+  const total = ALL_AVAILABLE_VERSION_CODES.length;
+  for (let idx = 0; idx < total; idx++) {
+    const code = ALL_AVAILABLE_VERSION_CODES[idx];
+    if (onProgress) {
+      onProgress(code, Math.round((idx / total) * 100), `Baixando versão ${code} (${idx + 1}/${total})...`);
+    }
+    await downloadFullVersionOffline(code, (pct, chapterText) => {
+      if (onProgress) {
+        const globalPct = Math.round(((idx + pct / 100) / total) * 100);
+        onProgress(code, globalPct, `Versão ${code}: ${pct}% - ${chapterText}`);
+      }
+    });
+  }
+  if (onProgress) {
+    onProgress('CONCLUIDO', 100, 'Todas as 8 versões bíblicas foram baixadas com sucesso!');
   }
 }
 

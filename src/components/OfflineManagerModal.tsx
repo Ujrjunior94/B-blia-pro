@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Download, HardDrive, CheckCircle2, ArrowLeft, CloudLightning, BookOpen, Crown, RefreshCw } from 'lucide-react';
-import { downloadFullVersionOffline } from '../services/bibleService';
+import { X, Download, HardDrive, CheckCircle2, ArrowLeft, CloudLightning, BookOpen, Crown, RefreshCw, Zap } from 'lucide-react';
+import { downloadFullVersionOffline, downloadAllVersionsOffline, ALL_AVAILABLE_VERSION_CODES } from '../services/bibleService';
 import { localDB } from '../utils/db';
 
 interface OfflineManagerModalProps {
@@ -38,6 +38,25 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ isOpen
       }
     } catch (e) {
       console.error('Download error:', e);
+    } finally {
+      setDownloadingCode(null);
+    }
+  };
+
+  const handleDownloadAllAvailable = async () => {
+    setDownloadingCode('ALL');
+    setDownloadProgress({ pct: 0, text: 'Iniciando download de todas as 8 versões...' });
+
+    try {
+      await downloadAllVersionsOffline((code, pct, statusText) => {
+        setDownloadProgress({ pct, text: statusText });
+        if (code !== 'CONCLUIDO' && !installedVersions.includes(code)) {
+          setInstalledVersions((prev) => Array.from(new Set([...prev, code])));
+        }
+      });
+      setInstalledVersions([...ALL_AVAILABLE_VERSION_CODES]);
+    } catch (e) {
+      console.error('Error downloading all versions:', e);
     } finally {
       setDownloadingCode(null);
     }
@@ -159,24 +178,52 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ isOpen
           </div>
         )}
 
-        {/* 2. Sub-Header Progress Bar */}
-        <div className="p-4 bg-[#F7F1E5]/40 dark:bg-stone-950/20 border-b border-[#E7DECF] dark:border-stone-850 space-y-2.5 shrink-0">
+        {/* 2. Sub-Header Progress Bar & Download All Action */}
+        <div className="p-4 bg-[#F7F1E5]/40 dark:bg-stone-950/20 border-b border-[#E7DECF] dark:border-stone-850 space-y-3 shrink-0">
           <div className="flex items-center justify-between text-xs font-sans font-bold text-[#5F5A52] dark:text-stone-400">
             <span className="flex items-center gap-1.5">
               <HardDrive className="w-4 h-4 text-[#3E5641] dark:text-[#D4A24C]" />
-              Armazenamento Local
+              Armazenamento Local ({installedVersions.length} / {ALL_AVAILABLE_VERSION_CODES.length} Versões)
             </span>
             <span className="font-sans text-stone-600 dark:text-stone-300">
-              {installedVersions.length * 48} MB armazenados
+              {installedVersions.length * 48} MB
             </span>
           </div>
 
           <div className="w-full h-2 rounded-full bg-[#E7DECF] dark:bg-stone-800 overflow-hidden">
             <div 
               className="h-full bg-[#D4A24C] transition-all duration-500 rounded-full" 
-              style={{ width: `${Math.min(installedVersions.length * 20, 100)}%` }}
+              style={{ width: `${Math.round((installedVersions.length / ALL_AVAILABLE_VERSION_CODES.length) * 100)}%` }}
             />
           </div>
+
+          {/* Download All Button */}
+          {downloadingCode === 'ALL' ? (
+            <div className="p-3 rounded-xl bg-amber-500/15 border border-amber-500/30 space-y-1.5">
+              <div className="flex items-center justify-between text-xs font-sans font-extrabold text-amber-800 dark:text-amber-200">
+                <span className="flex items-center gap-1.5">
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>Baixando Todas as Versões...</span>
+                </span>
+                <span>{downloadProgress.pct}%</span>
+              </div>
+              <div className="w-full h-1.5 rounded-full bg-stone-200 dark:bg-stone-800 overflow-hidden">
+                <div className="h-full bg-amber-600 transition-all duration-300 rounded-full" style={{ width: `${downloadProgress.pct}%` }} />
+              </div>
+              <p className="text-[10px] font-sans text-stone-500 dark:text-stone-400 truncate">
+                {downloadProgress.text}
+              </p>
+            </div>
+          ) : (
+            <button
+              onClick={handleDownloadAllAvailable}
+              disabled={downloadingCode !== null}
+              className="w-full py-2.5 px-3.5 rounded-xl bg-[#3E5641] hover:bg-[#324534] text-[#FFFDF8] font-sans font-extrabold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              <Download className="w-4 h-4" />
+              <span>Baixar Todas as Versões Bíblicas (100% Offline)</span>
+            </button>
+          )}
         </div>
 
         {/* 3. Sub Tabs: Traduções & Textos Originais */}
