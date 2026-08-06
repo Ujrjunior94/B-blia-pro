@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import { DESAFIO_WEEKS, DesafioWeek } from '../data/desafio365Data';
 import { useTheme } from '../styles/themeConstants';
+import { AiPlanGeneratorModal } from './AiPlanGeneratorModal';
+import { CustomReadingPlan } from '../types';
 
 interface Desafio365ViewProps {
   onOpenPassage?: (bookId: string, chapter: number) => void;
@@ -45,6 +47,26 @@ export const Desafio365View: React.FC<Desafio365ViewProps> = ({ onOpenPassage })
   const [localNote, setLocalNote] = useState<string>('');
   const [localPrayer, setLocalPrayer] = useState<string>('');
   const [showSaveFeedback, setShowSaveFeedback] = useState<boolean>(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState<boolean>(false);
+  const [customAiPlans, setCustomAiPlans] = useState<CustomReadingPlan[]>([]);
+
+  const loadCustomAiPlans = () => {
+    try {
+      const saved = localStorage.getItem('jornada_custom_plans_v2');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setCustomAiPlans(parsed);
+        }
+      }
+    } catch (e) {
+      console.error('Error loading custom AI plans', e);
+    }
+  };
+
+  useEffect(() => {
+    loadCustomAiPlans();
+  }, []);
 
   // Load progress from localStorage
   useEffect(() => {
@@ -132,9 +154,18 @@ export const Desafio365View: React.FC<Desafio365ViewProps> = ({ onOpenPassage })
                   Acompanhe seu avanço diário e consolide seu hábito de leitura bíblica.
                 </p>
               </div>
-              <button className="p-3 rounded-2xl bg-[#1C2E1E] dark:bg-[#B28236] text-[#D4A24C] hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-sm border border-[#D4A24C]/20">
-                <Settings className="w-5 h-5 text-[#D4A24C]" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsAiModalOpen(true)}
+                  className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-[#D4A24C] to-amber-500 text-stone-950 font-sans font-extrabold text-xs uppercase tracking-wider hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-md flex items-center gap-2 border border-amber-300/40"
+                >
+                  <Sparkles className="w-4 h-4 text-stone-950 animate-pulse" />
+                  <span>Plano com IA</span>
+                </button>
+                <button className="p-3 rounded-2xl bg-[#1C2E1E] dark:bg-[#B28236] text-[#D4A24C] hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-sm border border-[#D4A24C]/20">
+                  <Settings className="w-5 h-5 text-[#D4A24C]" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -265,15 +296,31 @@ export const Desafio365View: React.FC<Desafio365ViewProps> = ({ onOpenPassage })
 
           {/* 3. Reading Plans Grid */}
           <div className="space-y-4">
-            <h3 className="text-sm font-classic font-bold text-theme-accent uppercase tracking-wider">
-              Seus Planos Bíblicos Ativos
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-classic font-bold text-theme-accent uppercase tracking-wider">
+                Seus Planos Bíblicos Ativos
+              </h3>
+              <button
+                onClick={() => setIsAiModalOpen(true)}
+                className="px-3.5 py-1.5 rounded-xl bg-theme-accent/10 hover:bg-theme-accent/20 text-[#3E5641] dark:text-[#D4A24C] border border-[#3E5641]/20 dark:border-[#D4A24C]/30 text-xs font-sans font-bold flex items-center gap-1.5 cursor-pointer transition-all"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-[#D4A24C] animate-pulse" />
+                <span>+ Sugerir com IA</span>
+              </button>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
                 { title: 'Bíblia em 1 Ano', sub: 'Dia 87/365', progress: '24%', icon: Calendar, color: 'text-amber-500' },
                 { title: 'Salmos & Provérbios', sub: 'Dia 12/60', progress: '20%', icon: Sparkles, color: 'text-theme-accent' },
                 { title: 'Vida de Cristo', sub: 'Dia 5/40', progress: '12%', icon: Award, color: 'text-red-500' },
+                ...customAiPlans.map(cp => ({
+                  title: cp.title,
+                  sub: `${cp.totalDurationDays} dias • ${cp.days.length} leituras`,
+                  progress: `${Math.round(((cp.completedDays?.length || 0) / (cp.days.length || 1)) * 100)}%`,
+                  icon: Sparkles,
+                  color: 'text-emerald-600 dark:text-amber-400'
+                }))
               ].map((plan, idx) => {
                 const Icon = plan.icon;
                 return (
@@ -287,7 +334,7 @@ export const Desafio365View: React.FC<Desafio365ViewProps> = ({ onOpenPassage })
                         <Icon className={`w-5 h-5 ${plan.color}`} />
                       </div>
                       <div className="space-y-0.5">
-                        <h4 className="font-classic font-bold text-xs text-theme-primary leading-tight group-hover:text-theme-accent transition-colors">
+                        <h4 className="font-classic font-bold text-xs text-theme-primary leading-tight group-hover:text-theme-accent transition-colors line-clamp-1">
                           {plan.title}
                         </h4>
                         <span className="text-[10px] text-theme-muted font-sans font-bold block">{plan.sub}</span>
@@ -513,6 +560,14 @@ export const Desafio365View: React.FC<Desafio365ViewProps> = ({ onOpenPassage })
         </div>
       )}
 
+      {/* AI Personalized Reading Plan Generator Modal */}
+      <AiPlanGeneratorModal
+        isOpen={isAiModalOpen}
+        onClose={() => setIsAiModalOpen(false)}
+        onPlanCreated={(newPlan) => {
+          loadCustomAiPlans();
+        }}
+      />
     </div>
   );
 };

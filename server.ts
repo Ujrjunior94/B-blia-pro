@@ -342,6 +342,76 @@ A imagem deve ser um plano de fundo atmosférico, sereno, com espaço central ad
     }
   });
 
+  // AI Personalized Reading Plan Generator Endpoint
+  app.post('/api/theology/generate-reading-plan', async (req, res) => {
+    try {
+      const { topic, durationDays = 30, focusLevel = 'Devocional Prático' } = req.body;
+      if (!topic || typeof topic !== 'string') {
+        res.status(400).json({ error: 'O tema ou interesse teológico é obrigatório.' });
+        return;
+      }
+
+      const ai = getAiClient();
+      const promptText = `Crie um plano de leitura bíblica personalizado de exatamente ${durationDays} dias sobre o tema/interesse: "${topic}". Foco: "${focusLevel}".
+Certifique-se de que os livros bíblicos fornecidos usem os IDs de 3 letras padrão em maiúsculas (ex: GEN, EXO, LEV, NUM, DEU, PSA, PRO, ISA, JER, MAT, MRK, LUK, JHN, ACT, ROM, 1CO, 2CO, GAL, EPH, PHP, COL, 1TH, 2TH, 1TI, 2TI, HEB, JAS, 1PE, 2PE, 1JN, REV, etc).`;
+
+      const metadataResponse = await ai.models.generateContent({
+        model: 'gemini-3.6-flash',
+        contents: promptText,
+        config: {
+          systemInstruction: 'Você é um pastor e teólogo erudito especializado no ensino das Escrituras Sagradas. Monte planos de leitura bíblica pedagogicamente perfeitos, edificantes e centrados em Cristo.',
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              title: {
+                type: Type.STRING,
+                description: 'Título marcante e edificante para o plano de leitura em português.'
+              },
+              description: {
+                type: Type.STRING,
+                description: 'Uma introdução pastoral inspiradora de 2 a 3 frases explicando os objetivos espirituais do plano.'
+              },
+              theme: {
+                type: Type.STRING,
+                description: 'A categoria ou tema teológico principal (ex: "Saúde Emocional", "Espiritualidade", "Doutrina").'
+              },
+              days: {
+                type: Type.ARRAY,
+                description: 'Lista contendo exatamente as leituras de cada um dos dias do plano.',
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    day: { type: Type.INTEGER, description: 'Número do dia (1..N)' },
+                    title: { type: Type.STRING, description: 'Título devocional do dia' },
+                    bookId: { type: Type.STRING, description: 'ID de 3 letras do livro bíblico em maiúsculas (ex: PHP, PSA, MAT, ROM)' },
+                    chapter: { type: Type.INTEGER, description: 'Número do capítulo bíblico para leitura' },
+                    verses: { type: Type.STRING, description: 'Versículos específicos ou trecho (ex: "v. 1-8" ou "v. 6-7")' },
+                    passageRef: { type: Type.STRING, description: 'Referência legível em português (ex: "Filipenses 4:6-7" ou "Salmos 23:1-6")' },
+                    reflection: { type: Type.STRING, description: 'Pensamento devocional curto ou direcionamento de oração para o dia (1-2 frases).' }
+                  },
+                  required: ['day', 'title', 'bookId', 'chapter', 'passageRef', 'reflection']
+                }
+              }
+            },
+            required: ['title', 'description', 'theme', 'days']
+          }
+        }
+      });
+
+      const planData = JSON.parse(metadataResponse.text || '{}');
+
+      res.json({
+        success: true,
+        plan: planData
+      });
+
+    } catch (error: any) {
+      console.error('Erro ao gerar plano de leitura com IA:', error);
+      res.status(500).json({ error: error.message || 'Erro ao gerar plano de leitura personalizado.' });
+    }
+  });
+
   // Vite Middleware integration for development mode vs Production static serving
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { CustomReadingPlan, CustomPlanStage, ReadingPlanDay } from '../types';
 import { BIBLE_BOOKS, getBookById } from '../data/bibleBooks';
+import { AiPlanGeneratorModal } from './AiPlanGeneratorModal';
 
 interface CustomReadingPlanBuilderProps {
   onOpenPassage?: (bookId: string, chapter: number) => void;
@@ -32,6 +33,7 @@ export const CustomReadingPlanBuilder: React.FC<CustomReadingPlanBuilderProps> =
   const [customPlans, setCustomPlans] = useState<CustomReadingPlan[]>([]);
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
   // Form Creation State
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -278,13 +280,23 @@ export const CustomReadingPlanBuilder: React.FC<CustomReadingPlanBuilderProps> =
           </p>
         </div>
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-amber-950 font-serif font-extrabold text-xs shadow-lg hover:shadow-xl transition-all flex items-center gap-2 shrink-0 cursor-pointer"
-        >
-          <Plus className="w-4 h-4 stroke-[3]" />
-          <span>Criar Novo Plano Personalizado</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <button
+            onClick={() => setIsAiModalOpen(true)}
+            className="px-5 py-3 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 font-serif font-extrabold text-xs transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
+            <span>Sugerir com IA</span>
+          </button>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-amber-950 font-serif font-extrabold text-xs shadow-lg hover:shadow-xl transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <Plus className="w-4 h-4 stroke-[3]" />
+            <span>Criar Manualmente</span>
+          </button>
+        </div>
       </div>
 
       {/* Main Content Area */}
@@ -901,6 +913,16 @@ export const CustomReadingPlanBuilder: React.FC<CustomReadingPlanBuilderProps> =
           </div>
         </div>
       )}
+
+      {/* AI Plan Generator Modal */}
+      <AiPlanGeneratorModal
+        isOpen={isAiModalOpen}
+        onClose={() => setIsAiModalOpen(false)}
+        onPlanCreated={(newPlan) => {
+          setCustomPlans((prev) => [newPlan, ...prev]);
+          setSelectedPlanId(newPlan.id);
+        }}
+      />
 
     </div>
   );
