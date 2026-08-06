@@ -1350,11 +1350,10 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {[
-                  { id: 'light', name: 'Claro Confortável', icon: '☀️', desc: 'Papel marfim clássico' },
-                  { id: 'dark', name: 'Pedra Escura', icon: '🌙', desc: 'Modo noturno repousante' },
-                  { id: 'sepia', name: 'Sépia Clássica', icon: '📜', desc: 'Tom suave de papel envelhecido' },
-                  { id: 'manuscript', name: 'Manuscrito Antigo', icon: '🏛️', desc: 'Codex sacra com capitulares' },
-                  { id: 'tora', name: 'Rolos da Torá', icon: '🕎', desc: 'Pergaminho com cilindros de madeira' },
+                  { id: 'parchment', name: 'Pergaminho Moderno', icon: '📜', desc: 'Textura de papel, marrom grafite e dourado' },
+                  { id: 'dark', name: 'Noite de Estudo', icon: '🌙', desc: 'Fundo azul profundo e texto claro' },
+                  { id: 'oliveira', name: 'Oliveira', icon: '🌿', desc: 'Verdes suaves e aparência acolhedora' },
+                  { id: 'templo', name: 'Templo', icon: '🏛️', desc: 'Minimalista inspirado em pedra clara' },
                 ].map((th) => (
                   <button
                     key={th.id}

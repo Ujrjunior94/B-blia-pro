@@ -56,7 +56,9 @@ export const Header: React.FC<HeaderProps> = ({
   }, []);
 
   const toggleTheme = () => {
-    const nextTheme = settings.theme === 'dark' ? 'light' : settings.theme === 'light' ? 'parchment' : 'dark';
+    const themeOrder: ('parchment' | 'dark' | 'oliveira' | 'templo')[] = ['parchment', 'dark', 'oliveira', 'templo'];
+    const currIndex = themeOrder.indexOf(settings.theme as any);
+    const nextTheme = themeOrder[(currIndex + 1) % themeOrder.length] || 'parchment';
     setSettings((prev) => ({ ...prev, theme: nextTheme }));
   };
 
@@ -126,16 +128,25 @@ export const Header: React.FC<HeaderProps> = ({
             <Settings className="w-4 h-4 text-theme-accent" />
           </button>
 
-          {/* Scriptorium Theme Cycle Button */}
+          {/* Exclusive Design System Theme Selector Button */}
           <button
             onClick={toggleTheme}
-            className="p-2.5 rounded-xl text-theme-secondary hover:text-theme-primary bg-theme-app border border-theme hover:bg-theme-card-hover transition-colors shadow-3xs cursor-pointer"
-            title={`Alternar tema scriptorium (Atual: ${settings.theme})`}
+            className="p-2.5 rounded-xl text-theme-secondary hover:text-theme-primary bg-theme-app border border-theme hover:bg-theme-card-hover transition-colors shadow-3xs cursor-pointer flex items-center justify-center"
+            title={`Tema Atual: ${
+              settings.theme === 'parchment' ? '📜 Pergaminho Moderno' :
+              settings.theme === 'dark' ? '🌙 Noite de Estudo' :
+              settings.theme === 'oliveira' ? '🌿 Oliveira' :
+              settings.theme === 'templo' ? '🏛️ Templo' : settings.theme
+            } (Clique para alternar)`}
           >
             {settings.theme === 'dark' ? (
-              <Sun className="w-4 h-4 text-[#D4A24C]" />
+              <span className="text-sm leading-none">🌙</span>
+            ) : settings.theme === 'oliveira' ? (
+              <span className="text-sm leading-none">🌿</span>
+            ) : settings.theme === 'templo' ? (
+              <span className="text-sm leading-none">🏛️</span>
             ) : (
-              <Moon className="w-4 h-4 text-theme-accent" />
+              <span className="text-sm leading-none">📜</span>
             )}
           </button>
 

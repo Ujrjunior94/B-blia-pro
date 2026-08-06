@@ -82,9 +82,11 @@ export const AiTheologyAssistant: React.FC<AiTheologyAssistantProps> = ({ onOpen
   const [loading, setLoading] = useState(false);
 
   const samplePrompts = [
-    'Explique o significado de João 1:1 no Grego Koiné',
-    'Como o livro de Gênesis aponta para Jesus Cristo?',
-    'Esboço de mensagem pastoral baseada no Salmo 23',
+    'Esboce um sermão expositivo sobre João 3 com introdução, 3 pontos, aplicação e perguntas para PG',
+    'Conselho bíblico: Estou me sentindo ansioso e sobrecarregado com o futuro',
+    'Devocional de 5 minutos para renovar a esperança e fé hoje',
+    'Explique o significado de João 1:1 no Grego Koiné e contexto teológico',
+    'Como o livro de Gênesis aponta para Jesus Cristo em figura e tipo?',
   ];
 
   // Auth states

@@ -197,7 +197,7 @@ export interface ReaderSettings {
   version: BibleVersionCode;
   fontSize: number; // e.g. 16, 18, 20, 22, 24
   fontFamily: 'serif' | 'sans' | 'mono';
-  theme: 'light' | 'dark' | 'sepia' | 'parchment' | 'manuscript' | 'tora';
+  theme: 'parchment' | 'dark' | 'oliveira' | 'templo' | 'light' | 'sepia' | 'manuscript' | 'tora';
   lineHeight: 'normal' | 'relaxed' | 'loose';
   showVerseNumbers: boolean;
   interlinearMode?: boolean;

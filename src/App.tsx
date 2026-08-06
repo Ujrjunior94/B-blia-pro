@@ -1,23 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Header } from './components/Header';
 import { HomeView } from './components/HomeView';
 import { BibleReader } from './components/BibleReader';
-import { InterlinearReader } from './components/InterlinearReader';
-import { DictionaryView } from './components/DictionaryView';
-import { CharactersView } from './components/CharactersView';
-import { BibleJourneyModule } from './components/BibleJourneyModule';
-import { Desafio365View } from './components/Desafio365View';
-import { NotesAndSearchView } from './components/NotesAndSearchView';
-import { AiTheologyAssistant } from './components/AiTheologyAssistant';
 import { BookChapterSelector } from './components/BookChapterSelector';
 import { OfflineManagerModal } from './components/OfflineManagerModal';
-import { MonthlyDevotionalsView } from './components/MonthlyDevotionalsView';
-import { PrayerJournalView } from './components/PrayerJournalView';
 import { BibleBook, ReaderSettings } from './types';
 import { BIBLE_BOOKS, getBookById } from './data/bibleBooks';
 import { useTheme } from './styles/themeConstants';
-import { Compass, BookOpen, Layers, Sparkles, Flame, Award, User, HeartHandshake } from 'lucide-react';
+import { Compass, BookOpen, Sparkles, User, HeartHandshake, Award } from 'lucide-react';
+
+// Lazy loaded heavy components for optimal initial bundle & fast FCP
+const InterlinearReader = lazy(() => import('./components/InterlinearReader').then(m => ({ default: m.InterlinearReader })));
+const DictionaryView = lazy(() => import('./components/DictionaryView').then(m => ({ default: m.DictionaryView })));
+const CharactersView = lazy(() => import('./components/CharactersView').then(m => ({ default: m.CharactersView })));
+const BibleJourneyModule = lazy(() => import('./components/BibleJourneyModule').then(m => ({ default: m.BibleJourneyModule })));
+const Desafio365View = lazy(() => import('./components/Desafio365View').then(m => ({ default: m.Desafio365View })));
+const NotesAndSearchView = lazy(() => import('./components/NotesAndSearchView').then(m => ({ default: m.NotesAndSearchView })));
+const AiTheologyAssistant = lazy(() => import('./components/AiTheologyAssistant').then(m => ({ default: m.AiTheologyAssistant })));
+const MonthlyDevotionalsView = lazy(() => import('./components/MonthlyDevotionalsView').then(m => ({ default: m.MonthlyDevotionalsView })));
+const PrayerJournalView = lazy(() => import('./components/PrayerJournalView').then(m => ({ default: m.PrayerJournalView })));
+
+function ComponentFallback() {
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-12 space-y-4 animate-pulse">
+      <div className="h-8 bg-stone-200 dark:bg-stone-800 rounded-2xl w-2/3"></div>
+      <div className="h-24 bg-stone-200 dark:bg-stone-800 rounded-3xl w-full"></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="h-40 bg-stone-200 dark:bg-stone-800 rounded-3xl"></div>
+        <div className="h-40 bg-stone-200 dark:bg-stone-800 rounded-3xl"></div>
+      </div>
+    </div>
+  );
+}
 
 export function App() {
   const { theme, setTheme } = useTheme();
@@ -129,93 +144,95 @@ export function App() {
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.15, ease: 'easeInOut' }}
           >
-            {activeTab === 'home' && (
-              <HomeView
-                currentBook={currentBook}
-                currentChapter={currentChapter}
-                onContinueReading={() => setActiveTab('reader')}
-                onGoToStudy={() => setActiveTab('study')}
-                onGoToChallenge={() => setActiveTab('challenge')}
-                onGoToDevotional={() => setActiveTab('devotional')}
-              />
-            )}
+            <Suspense fallback={<ComponentFallback />}>
+              {activeTab === 'home' && (
+                <HomeView
+                  currentBook={currentBook}
+                  currentChapter={currentChapter}
+                  onContinueReading={() => setActiveTab('reader')}
+                  onGoToStudy={() => setActiveTab('study')}
+                  onGoToChallenge={() => setActiveTab('challenge')}
+                  onGoToDevotional={() => setActiveTab('devotional')}
+                />
+              )}
 
-            {activeTab === 'reader' && (
-              <BibleReader
-                currentBook={currentBook}
-                currentChapter={currentChapter}
-                settings={settings}
-                setSettings={setSettings}
-                onNavigateChapter={handleNavigateChapter}
-                onOpenBookSelector={() => setIsBookSelectorOpen(true)}
-                onOpenStudyGuide={handleOpenStudyGuideFromReader}
-              />
-            )}
+              {activeTab === 'reader' && (
+                <BibleReader
+                  currentBook={currentBook}
+                  currentChapter={currentChapter}
+                  settings={settings}
+                  setSettings={setSettings}
+                  onNavigateChapter={handleNavigateChapter}
+                  onOpenBookSelector={() => setIsBookSelectorOpen(true)}
+                  onOpenStudyGuide={handleOpenStudyGuideFromReader}
+                />
+              )}
 
-            {activeTab === 'interlinear' && (
-              <InterlinearReader
-                currentBook={currentBook}
-                currentChapter={currentChapter}
-                onNavigateChapter={handleNavigateChapter}
-                onOpenBookSelector={() => setIsBookSelectorOpen(true)}
-              />
-            )}
+              {activeTab === 'interlinear' && (
+                <InterlinearReader
+                  currentBook={currentBook}
+                  currentChapter={currentChapter}
+                  onNavigateChapter={handleNavigateChapter}
+                  onOpenBookSelector={() => setIsBookSelectorOpen(true)}
+                />
+              )}
 
-            {activeTab === 'dictionary' && (
-              <DictionaryView />
-            )}
+              {activeTab === 'dictionary' && (
+                <DictionaryView />
+              )}
 
-            {activeTab === 'characters' && (
-              <CharactersView />
-            )}
+              {activeTab === 'characters' && (
+                <CharactersView />
+              )}
 
-            {activeTab === 'study' && (
-              <BibleJourneyModule
-                onSelectBookForReading={(bookId, chapter) => {
-                  const b = getBookById(bookId);
-                  if (b) {
-                    setCurrentBook(b);
-                    setCurrentChapter(chapter || 1);
-                    setActiveTab('reader');
-                  }
-                }}
-              />
-            )}
+              {activeTab === 'study' && (
+                <BibleJourneyModule
+                  onSelectBookForReading={(bookId, chapter) => {
+                    const b = getBookById(bookId);
+                    if (b) {
+                      setCurrentBook(b);
+                      setCurrentChapter(chapter || 1);
+                      setActiveTab('reader');
+                    }
+                  }}
+                />
+              )}
 
-            {activeTab === 'challenge' && (
-              <Desafio365View
-                onOpenPassage={handleOpenPassageFromPlan}
-              />
-            )}
+              {activeTab === 'challenge' && (
+                <Desafio365View
+                  onOpenPassage={handleOpenPassageFromPlan}
+                />
+              )}
 
-            {activeTab === 'devotional' && (
-              <MonthlyDevotionalsView
-                onOpenPassage={handleOpenPassageFromPlan}
-              />
-            )}
+              {activeTab === 'devotional' && (
+                <MonthlyDevotionalsView
+                  onOpenPassage={handleOpenPassageFromPlan}
+                />
+              )}
 
-            {activeTab === 'prayers' && (
-              <PrayerJournalView />
-            )}
+              {activeTab === 'prayers' && (
+                <PrayerJournalView />
+              )}
 
-            {activeTab === 'notes' && (
-              <NotesAndSearchView
-                onOpenVerse={(bookId, chapter) => {
-                  const b = getBookById(bookId);
-                  if (b) {
-                    setCurrentBook(b);
-                    setCurrentChapter(chapter);
-                    setActiveTab('reader');
-                  }
-                }}
-              />
-            )}
+              {activeTab === 'notes' && (
+                <NotesAndSearchView
+                  onOpenVerse={(bookId, chapter) => {
+                    const b = getBookById(bookId);
+                    if (b) {
+                      setCurrentBook(b);
+                      setCurrentChapter(chapter);
+                      setActiveTab('reader');
+                    }
+                  }}
+                />
+              )}
 
-            {activeTab === 'ai' && (
-              <AiTheologyAssistant 
-                onOpenOffline={() => setIsOfflineModalOpen(true)} 
-              />
-            )}
+              {activeTab === 'ai' && (
+                <AiTheologyAssistant 
+                  onOpenOffline={() => setIsOfflineModalOpen(true)} 
+                />
+              )}
+            </Suspense>
           </motion.div>
         </AnimatePresence>
       </main>

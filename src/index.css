@@ -1,42 +1,63 @@
 @import "tailwindcss";
 
-:root {
-  --bg-app: #F7F1E5;
+/* TEMA 1 — Pergaminho Moderno (Padrão) */
+:root, .parchment-theme {
+  --bg-app: #F9F6EE;
   --bg-card: #FFFDF8;
-  --bg-card-hover: #EFE6D6;
-  --text-primary: #1F1B16;
-  --text-secondary: #3A352F;
-  --text-muted: #5F5A52;
-  --border-color: #E7DECF;
-  --accent-primary: #3E5641;
-  --accent-hover: #2F4231;
-  --accent-bg: rgba(62, 86, 65, 0.08);
+  --bg-card-hover: #EFE8DC;
+  --text-primary: #2C2523;
+  --text-secondary: #423B38;
+  --text-muted: #6E6561;
+  --border-color: #E8DFC8;
+  --accent-primary: #C5A059;
+  --accent-hover: #A3803C;
+  --accent-bg: rgba(197, 160, 89, 0.12);
+  --paper-texture: radial-gradient(circle at 50% 30%, rgba(255, 253, 248, 0.9) 0%, rgba(232, 223, 200, 0.25) 100%);
 }
 
-.dark {
-  --bg-app: #151311;
-  --bg-card: #1D1B18;
-  --bg-card-hover: #262320;
-  --text-primary: #F4EFE6;
-  --text-secondary: #D9D2C5;
-  --text-muted: #9E9687;
-  --border-color: rgba(231, 222, 207, 0.08);
-  --accent-primary: #D4A24C;
-  --accent-hover: #E7BE73;
-  --accent-bg: rgba(212, 162, 76, 0.12);
+/* TEMA 2 — Noite de Estudo */
+.dark, .dark-theme {
+  --bg-app: #0B132B;
+  --bg-card: #1C2541;
+  --bg-card-hover: #253254;
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+  --border-color: rgba(226, 232, 240, 0.12);
+  --accent-primary: #E2C044;
+  --accent-hover: #F0D060;
+  --accent-bg: rgba(226, 192, 68, 0.15);
+  --paper-texture: radial-gradient(circle at 50% 30%, rgba(28, 37, 65, 0.4) 0%, rgba(11, 19, 43, 0.6) 100%);
 }
 
-.parchment-theme {
-  --bg-app: #F5EFEB;
-  --bg-card: #FAF5F0;
-  --bg-card-hover: #EDE5DC;
-  --text-primary: #1C1814;
-  --text-secondary: #38312B;
-  --text-muted: #5E5349;
-  --border-color: #DFD5C6;
-  --accent-primary: #2B422F;
-  --accent-hover: #1A2E1E;
-  --accent-bg: rgba(43, 66, 47, 0.06);
+/* TEMA 3 — Oliveira */
+.oliveira-theme {
+  --bg-app: #F2F7F2;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #E2EDE2;
+  --text-primary: #1F3323;
+  --text-secondary: #344A39;
+  --text-muted: #5B7361;
+  --border-color: #D3E2D4;
+  --accent-primary: #2D5A27;
+  --accent-hover: #1E3F1A;
+  --accent-bg: rgba(45, 90, 39, 0.12);
+  --paper-texture: none;
+}
+
+/* TEMA 4 — Templo */
+.templo-theme {
+  --bg-app: #F0F2F5;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #E2E6EA;
+  --text-primary: #1F2937;
+  --text-secondary: #4B5563;
+  --text-muted: #6B7280;
+  --border-color: #E5E7EB;
+  --accent-primary: #C5A059;
+  --accent-hover: #A3803C;
+  --accent-bg: rgba(197, 160, 89, 0.10);
+  --paper-texture: none;
 }
 
 /* Premium Scriptorium Fonts */

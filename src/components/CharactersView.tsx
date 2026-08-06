@@ -19,11 +19,15 @@ import {
   ChevronRight, 
   Award, 
   Flame,
-  Filter
+  Filter,
+  Clock,
+  GitCommit
 } from 'lucide-react';
 import { BIBLICAL_CHARACTERS, BiblicalCharacter } from '../data/charactersData';
+import { TIMELINE_EVENTS, GENEALOGY_NODES } from '../data/timelineGenealogyData';
 
 export const CharactersView: React.FC = () => {
+  const [subView, setSubView] = useState<'gallery' | 'timeline' | 'genealogy'>('gallery');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeCategory, setActiveCategory] = useState<string>('ALL');
   const [activeTestament, setActiveTestament] = useState<string>('ALL');
@@ -161,8 +165,111 @@ export const CharactersView: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Main Layout Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      {/* 1.5 SubView Switcher Toolbar */}
+      <div className="flex items-center justify-start gap-2 p-1.5 bg-theme-card border border-theme rounded-2xl shadow-sm overflow-x-auto">
+        <button
+          onClick={() => setSubView('gallery')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+            subView === 'gallery'
+              ? 'bg-amber-800 text-amber-50 dark:bg-amber-600 shadow-sm'
+              : 'text-theme-muted hover:text-theme-primary hover:bg-stone-100 dark:hover:bg-stone-800'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span>Galeria de Personagens</span>
+        </button>
+
+        <button
+          onClick={() => setSubView('timeline')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+            subView === 'timeline'
+              ? 'bg-amber-800 text-amber-50 dark:bg-amber-600 shadow-sm'
+              : 'text-theme-muted hover:text-theme-primary hover:bg-stone-100 dark:hover:bg-stone-800'
+          }`}
+        >
+          <Clock className="w-4 h-4 text-amber-400" />
+          <span>Linha do Tempo Bíblica</span>
+        </button>
+
+        <button
+          onClick={() => setSubView('genealogy')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+            subView === 'genealogy'
+              ? 'bg-amber-800 text-amber-50 dark:bg-amber-600 shadow-sm'
+              : 'text-theme-muted hover:text-theme-primary hover:bg-stone-100 dark:hover:bg-stone-800'
+          }`}
+        >
+          <GitCommit className="w-4 h-4 text-rose-400" />
+          <span>Árvore Genealógica Messiânica</span>
+        </button>
+      </div>
+
+      {subView === 'timeline' && (
+        <div className="p-6 md:p-8 bg-theme-card border border-theme rounded-3xl shadow-sm space-y-6">
+          <div className="flex items-center justify-between border-b border-theme pb-4">
+            <div>
+              <h2 className="text-xl font-classic font-bold text-theme-primary">Linha do Tempo Histórico-Bíblica</h2>
+              <p className="text-xs text-theme-muted">Reis, profetas, apóstolos, imperadores e grandes marcos da História da Redenção</p>
+            </div>
+          </div>
+
+          <div className="relative border-l-2 border-amber-500/40 dark:border-amber-500/20 ml-4 pl-6 space-y-8">
+            {TIMELINE_EVENTS.map((event) => (
+              <div key={event.id} className="relative group">
+                <div className="absolute -left-[31px] top-1.5 w-4 h-4 rounded-full bg-amber-600 border-4 border-theme-card group-hover:scale-125 transition-all" />
+                <div className="p-5 rounded-2xl bg-theme-app border border-theme hover:border-amber-500/30 transition-all space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-300 text-[10px] font-bold">
+                      {event.year} — {event.period}
+                    </span>
+                    <span className="text-xs font-mono font-semibold text-theme-accent">
+                      {event.passageRef}
+                    </span>
+                  </div>
+                  <h3 className="text-base font-bold text-theme-primary">{event.title}</h3>
+                  <div className="flex items-center gap-3 text-xs text-theme-muted">
+                    <span>👑 Figura: <strong className="text-theme-primary">{event.keyFigure}</strong> ({event.role})</span>
+                    <span>🏛️ Império Dominante: <strong className="text-theme-primary">{event.empire}</strong></span>
+                  </div>
+                  <p className="text-xs leading-relaxed text-theme-muted pt-1">{event.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {subView === 'genealogy' && (
+        <div className="p-6 md:p-8 bg-theme-card border border-theme rounded-3xl shadow-sm space-y-6">
+          <div className="flex items-center justify-between border-b border-theme pb-4">
+            <div>
+              <h2 className="text-xl font-classic font-bold text-theme-primary">Árvore Genealógica Messiânica</h2>
+              <p className="text-xs text-theme-muted">A linhagem ininterrupta de Adão até Jesus Cristo, o Leão da Tribo de Judá</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {GENEALOGY_NODES.map((node) => (
+              <div key={node.id} className={`p-4 rounded-2xl border transition-all ${node.isMessianicLine ? 'bg-amber-50/50 dark:bg-amber-950/20 border-amber-500/30' : 'bg-theme-app border-theme'}`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                    Geração #{node.generationOrder}
+                  </span>
+                  {node.tribe && <span className="text-[10px] bg-stone-200 dark:bg-stone-800 px-2 py-0.5 rounded-full text-theme-muted">{node.tribe}</span>}
+                </div>
+                <h3 className="text-base font-bold text-theme-primary mt-1">{node.name}</h3>
+                <p className="text-xs font-serif italic text-amber-800/80 dark:text-amber-300/80 mb-2">"{node.meaning}"</p>
+                <p className="text-xs text-theme-muted leading-relaxed mb-3">{node.importance}</p>
+                <div className="text-[11px] font-mono text-theme-accent">📖 {node.keyVerse}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {subView === 'gallery' && (
+        /* 2. Main Layout Grid */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* Left Side Column: Filter Panel & Character List (5 columns) */}
         <div className="lg:col-span-5 space-y-5">
@@ -567,6 +674,7 @@ export const CharactersView: React.FC = () => {
         </div>
 
       </div>
+      )}
     </div>
   );
 };

@@ -11,6 +11,14 @@ async function startServer() {
 
   app.use(express.json({ limit: '5mb' }));
 
+  // Security Headers Middleware
+  app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    next();
+  });
+
   // Initialize Gemini AI client lazily/safely
   const getAiClient = () => {
     const apiKey = process.env.GEMINI_API_KEY;

@@ -53,6 +53,55 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         {/* Options List */}
         <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1 no-scrollbar">
           
+          {/* Identidade Visual / Temas Exclusivos */}
+          <div className="p-4 rounded-2xl bg-theme-app border border-theme space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-sans font-extrabold text-theme-primary block uppercase tracking-wider">
+                Tema & Identidade Visual
+              </label>
+              <span className="text-[10px] font-sans font-bold px-2 py-0.5 rounded-full bg-theme-accent/15 text-theme-accent border border-theme-accent/30">
+                Design System B-bíblia-pro
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {[
+                { id: 'parchment', name: 'Pergaminho Moderno', icon: '📜', desc: 'Marfim, marrom grafite e dourado', bg: 'bg-[#F9F6EE]', text: 'text-[#2C2523]', accent: 'bg-[#C5A059]' },
+                { id: 'dark', name: 'Noite de Estudo', icon: '🌙', desc: 'Azul profundo e leitura noturna', bg: 'bg-[#0B132B]', text: 'text-[#F8FAFC]', accent: 'bg-[#E2C044]' },
+                { id: 'oliveira', name: 'Oliveira', icon: '🌿', desc: 'Verdes suaves e paz acolhedora', bg: 'bg-[#F2F7F2]', text: 'text-[#1F3323]', accent: 'bg-[#2D5A27]' },
+                { id: 'templo', name: 'Templo', icon: '🏛️', desc: 'Minimalista em pedra clara', bg: 'bg-[#F0F2F5]', text: 'text-[#1F2937]', accent: 'bg-[#C5A059]' },
+              ].map((th) => {
+                const isActive = settings.theme === th.id;
+                return (
+                  <button
+                    key={th.id}
+                    onClick={() => setSettings((prev) => ({ ...prev, theme: th.id as any }))}
+                    className={`p-3 rounded-2xl text-left border transition-all cursor-pointer flex items-center gap-3 relative overflow-hidden ${
+                      isActive
+                        ? 'border-theme-accent ring-2 ring-theme-accent/40 bg-theme-card'
+                        : 'border-theme bg-theme-card/60 hover:border-theme-accent/50'
+                    }`}
+                  >
+                    <div className={`w-8 h-8 rounded-xl ${th.bg} ${th.text} flex items-center justify-center text-sm shadow-2xs border border-black/10 shrink-0`}>
+                      {th.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-serif font-extrabold text-xs text-theme-primary truncate">
+                          {th.name}
+                        </span>
+                        <div className={`w-2 h-2 rounded-full ${th.accent} shrink-0`} />
+                      </div>
+                      <span className="block text-[10px] font-sans text-theme-muted truncate mt-0.5">
+                        {th.desc}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Versão Padrão */}
           <div className="p-4 rounded-2xl bg-[#F7F1E5]/50 dark:bg-stone-900 border border-[#E7DECF] dark:border-stone-800 space-y-2">
             <label className="text-xs font-sans font-extrabold text-[#1F1B16] dark:text-stone-200 block uppercase tracking-wider">

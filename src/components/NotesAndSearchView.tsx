@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MessageSquare, Highlighter, Bookmark, Download, Trash2, ExternalLink, Sparkles } from 'lucide-react';
+import { Search, MessageSquare, Highlighter, Bookmark, Download, Trash2, ExternalLink, Sparkles, Tag, Heart, Flame, BookOpen, Shield, HelpCircle } from 'lucide-react';
 import { BibleBook, UserBookmark, UserHighlight, UserNote } from '../types';
 import { BIBLE_BOOKS, getBookById } from '../data/bibleBooks';
 import { searchBibleVerses } from '../services/bibleService';
 import { localDB } from '../utils/db';
 import { removeHighlight, subscribeUserHighlights } from '../services/highlightService';
 import { auth, onAuthStateChanged } from '../services/firebase';
+import { SMART_SEARCH_CATEGORIES, SmartCategoryItem } from '../data/smartSearchData';
 
 interface NotesAndSearchViewProps {
   onOpenVerse: (bookId: string, chapter: number) => void;
@@ -15,6 +16,18 @@ export const NotesAndSearchView: React.FC<NotesAndSearchViewProps> = ({ onOpenVe
   const [activeSubTab, setActiveSubTab] = useState<'search' | 'notes' | 'highlights' | 'bookmarks'>('search');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<{ book: BibleBook; chapter: number; verse: number; text: string }[]>([]);
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('todos');
+
+  const smartCategoryResults = SMART_SEARCH_CATEGORIES.filter((item) => {
+    if (selectedCategoryFilter !== 'todos' && item.category !== selectedCategoryFilter) return false;
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase().trim();
+    return (
+      item.title.toLowerCase().includes(q) ||
+      item.summary.toLowerCase().includes(q) ||
+      item.keywords.some((k) => k.toLowerCase().includes(q))
+    );
+  });
   const [notes, setNotes] = useState<UserNote[]>([]);
   const [highlights, setHighlights] = useState<UserHighlight[]>([]);
   const [bookmarks, setBookmarks] = useState<UserBookmark[]>([]);
@@ -138,10 +151,10 @@ export const NotesAndSearchView: React.FC<NotesAndSearchViewProps> = ({ onOpenVe
               <Search className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
               <input
                 type="text"
-                placeholder="Digite uma palavra ou frase (ex: amor, luz, salvação, consolo)..."
+                placeholder="Pesquisar por palavra, tema, emoção, personagem, milagre, profecia..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 bg-white dark:bg-stone-900 border border-amber-900/15 dark:border-stone-800 rounded-2xl text-stone-900 dark:text-amber-100 font-serif focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm"
+                className="w-full pl-11 pr-4 py-3 bg-white dark:bg-stone-900 border border-amber-900/15 dark:border-stone-800 rounded-2xl text-stone-900 dark:text-amber-100 font-serif focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm text-sm"
               />
             </div>
             <button
@@ -151,6 +164,72 @@ export const NotesAndSearchView: React.FC<NotesAndSearchViewProps> = ({ onOpenVe
               Pesquisar
             </button>
           </form>
+
+          {/* Categorias de Busca Inteligente */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-stone-600 dark:text-stone-400">
+              <Tag className="w-3.5 h-3.5 text-amber-600" />
+              <span>Filtros de Busca Temática e Exegética:</span>
+            </div>
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+              {['todos', 'tema', 'emoção', 'personagem', 'milagre', 'profecia', 'parábola', 'doutrina', 'pecado', 'promessa', 'oração'].map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategoryFilter(cat)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold capitalize whitespace-nowrap transition-all ${
+                    selectedCategoryFilter === cat
+                      ? 'bg-amber-700 text-amber-50 shadow-xs'
+                      : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-200'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Smart Categorized Results */}
+          {smartCategoryResults.length > 0 && (
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center justify-between border-b border-stone-200 dark:border-stone-800 pb-2">
+                <span className="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider">
+                  Tópicos e Categorias Encontrados ({smartCategoryResults.length})
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {smartCategoryResults.map((item) => (
+                  <div key={item.id} className="p-5 rounded-2xl bg-white dark:bg-stone-900 border border-amber-900/15 dark:border-stone-800 shadow-xs space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-300 text-[10px] font-bold uppercase tracking-wider">
+                        {item.category}
+                      </span>
+                      <Sparkles className="w-4 h-4 text-amber-500" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-stone-900 dark:text-amber-100">{item.title}</h3>
+                      <p className="text-xs text-stone-600 dark:text-stone-400 mt-1 leading-relaxed">{item.summary}</p>
+                    </div>
+                    <div className="space-y-1.5 pt-1 border-t border-stone-100 dark:border-stone-800">
+                      {item.keyVerses.map((kv, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => onOpenVerse(kv.bookId, kv.chapter)}
+                          className="p-2.5 rounded-xl bg-stone-50 dark:bg-stone-800/60 hover:bg-amber-50 dark:hover:bg-amber-950/30 cursor-pointer transition-colors"
+                        >
+                          <span className="text-xs font-bold text-amber-800 dark:text-amber-400 block mb-0.5">
+                            📖 {kv.reference}
+                          </span>
+                          <p className="text-xs font-serif italic text-stone-700 dark:text-stone-300">
+                            "{kv.text}"
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {searchResults.length > 0 && (
             <div className="space-y-3">

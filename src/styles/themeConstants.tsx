@@ -14,11 +14,13 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
  */
 
 // Tipos de Temas suportados pelo sistema
-export type ThemeType = 'light' | 'dark' | 'sepia' | 'parchment' | 'manuscript' | 'tora';
+export type ThemeType = 'parchment' | 'dark' | 'oliveira' | 'templo' | 'light' | 'sepia' | 'manuscript' | 'tora';
 
 export interface ThemeConfig {
   id: ThemeType;
   name: string;
+  concept: string;
+  icon: string;
   className: string;
   variables: {
     bgApp: string;
@@ -35,44 +37,107 @@ export interface ThemeConfig {
 }
 
 export const THEME_MODES: Record<ThemeType, ThemeConfig> = {
-  light: {
-    id: 'light',
-    name: 'Claro Confortável',
-    className: '',
+  parchment: {
+    id: 'parchment',
+    name: 'Pergaminho Moderno',
+    concept: 'Textura muito sutil de papel, dourado discreto e tipografia elegante',
+    icon: '📜',
+    className: 'parchment-theme',
     variables: {
-      bgApp: '#F7F1E5', // Warm neutral cream
-      bgCard: '#FFFDF8', // Elegant warm eggshell white
-      bgCardHover: '#EFE6D6', // Soft secondary beige
-      textPrimary: '#1F1B16', // Deep charcoal/brown
-      textSecondary: '#3A352F', // Slate-warm brown
-      textMuted: '#5F5A52', // Muted brown
-      borderColor: '#E7DECF', // Subdued warm border
-      accentPrimary: '#3E5641', // Sacred dark green
-      accentHover: '#2F4231', // Deep forest green
-      accentBg: 'rgba(62, 86, 65, 0.08)',
+      bgApp: '#F9F6EE', // Marfim quente
+      bgCard: '#FFFDF8', // Creme suave
+      bgCardHover: '#EFE8DC',
+      textPrimary: '#2C2523', // Marrom grafite
+      textSecondary: '#423B38',
+      textMuted: '#6E6561',
+      borderColor: '#E8DFC8',
+      accentPrimary: '#C5A059', // Dourado fosco
+      accentHover: '#A3803C',
+      accentBg: 'rgba(197, 160, 89, 0.12)',
     }
   },
   dark: {
     id: 'dark',
-    name: 'Pedra Quente Escura',
-    className: 'dark',
+    name: 'Noite de Estudo',
+    concept: 'Fundo azul profundo e texto claro excelente para leitura noturna',
+    icon: '🌙',
+    className: 'dark dark-theme',
     variables: {
-      bgApp: '#1A1816', // Darker warm charcoal
-      bgCard: '#262320', // Warm dark card
-      bgCardHover: '#332E2A',
-      textPrimary: '#F7F1E5', // Soft warm cream
-      textSecondary: '#E0D9CD', // Sand grey
-      textMuted: '#A39B8F', // Warm grey
-      borderColor: 'rgba(231, 222, 207, 0.1)',
-      accentPrimary: '#D4A24C', // Warm gold
-      accentHover: '#E7BE73', // Brighter gold
-      accentBg: 'rgba(212, 162, 76, 0.15)',
+      bgApp: '#0B132B', // Azul marinho profundo
+      bgCard: '#1C2541', // Azul grafite
+      bgCardHover: '#253254',
+      textPrimary: '#F8FAFC', // Branco quente
+      textSecondary: '#CBD5E1',
+      textMuted: '#94A3B8',
+      borderColor: 'rgba(226, 232, 240, 0.12)',
+      accentPrimary: '#E2C044', // Dourado suave
+      accentHover: '#F0D060',
+      accentBg: 'rgba(226, 192, 68, 0.15)',
+    }
+  },
+  oliveira: {
+    id: 'oliveira',
+    name: 'Oliveira',
+    concept: 'Verdes suaves e aparência acolhedora e pacífica',
+    icon: '🌿',
+    className: 'oliveira-theme',
+    variables: {
+      bgApp: '#F2F7F2', // Verde muito claro
+      bgCard: '#FFFFFF', // Branco
+      bgCardHover: '#E2EDE2',
+      textPrimary: '#1F3323', // Verde oliva escuro
+      textSecondary: '#344A39',
+      textMuted: '#5B7361',
+      borderColor: '#D3E2D4',
+      accentPrimary: '#2D5A27', // Verde musgo
+      accentHover: '#1E3F1A',
+      accentBg: 'rgba(45, 90, 39, 0.12)',
+    }
+  },
+  templo: {
+    id: 'templo',
+    name: 'Templo',
+    concept: 'Visual minimalista com inspiração em pedra clara e luz natural',
+    icon: '🏛️',
+    className: 'templo-theme',
+    variables: {
+      bgApp: '#F0F2F5', // Cinza pedra claro
+      bgCard: '#FFFFFF', // Branco
+      bgCardHover: '#E2E6EA',
+      textPrimary: '#1F2937', // Cinza grafite
+      textSecondary: '#4B5563',
+      textMuted: '#6B7280',
+      borderColor: '#E5E7EB',
+      accentPrimary: '#C5A059', // Dourado suave
+      accentHover: '#A3803C',
+      accentBg: 'rgba(197, 160, 89, 0.10)',
+    }
+  },
+  light: {
+    id: 'light',
+    name: 'Claro Confortável',
+    concept: 'Pergaminho suave',
+    icon: '☀️',
+    className: 'parchment-theme',
+    variables: {
+      bgApp: '#F9F6EE',
+      bgCard: '#FFFDF8',
+      bgCardHover: '#EFE8DC',
+      textPrimary: '#2C2523',
+      textSecondary: '#423B38',
+      textMuted: '#6E6561',
+      borderColor: '#E8DFC8',
+      accentPrimary: '#C5A059',
+      accentHover: '#A3803C',
+      accentBg: 'rgba(197, 160, 89, 0.12)',
     }
   },
   sepia: {
     id: 'sepia',
     name: 'Sépia Clássica',
-    className: '',
+    concept: 'Sépia de livro',
+    icon: '📙',
+    className: 'parchment-theme',
     variables: {
       bgApp: '#F4ECD8',
       bgCard: '#FFFDF8',
@@ -86,27 +151,12 @@ export const THEME_MODES: Record<ThemeType, ThemeConfig> = {
       accentBg: 'rgba(139, 90, 43, 0.1)',
     }
   },
-  parchment: {
-    id: 'parchment',
-    name: 'Manuscrito Pergaminho',
-    className: 'parchment-theme',
-    variables: {
-      bgApp: '#F7F1E5', // Authentic parchment cream
-      bgCard: '#FFFDF8', // Pristine scriptorium white
-      bgCardHover: '#EDE4D5',
-      textPrimary: '#1F1B16', // Deep iron ink
-      textSecondary: '#3A352F', // Walnut ink
-      textMuted: '#5F5A52', // Muted ash ink
-      borderColor: '#E7DECF',
-      accentPrimary: '#3E5641', // Sacred dark green (as main theme primary)
-      accentHover: '#2F4231',
-      accentBg: 'rgba(62, 86, 65, 0.08)',
-    }
-  },
   manuscript: {
     id: 'manuscript',
     name: 'Manuscrito Antigo',
-    className: '',
+    concept: 'Manuscrito clássico',
+    icon: '📜',
+    className: 'parchment-theme',
     variables: {
       bgApp: '#F2E8D5',
       bgCard: '#FFFDF8',
@@ -123,7 +173,9 @@ export const THEME_MODES: Record<ThemeType, ThemeConfig> = {
   tora: {
     id: 'tora',
     name: 'Rolos da Torá',
-    className: '',
+    concept: 'Rolos sacros',
+    icon: '🕎',
+    className: 'parchment-theme',
     variables: {
       bgApp: '#FAF3E0',
       bgCard: '#FFFDF8',
@@ -241,10 +293,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Inicialização segura baseada no localStorage ou preferência do sistema
   const [theme, setThemeState] = useState<ThemeType>(() => {
     const saved = localStorage.getItem('jornada_biblia_theme');
-    if (saved === 'dark' || saved === 'parchment' || saved === 'light') {
+    if (saved === 'dark' || saved === 'parchment' || saved === 'oliveira' || saved === 'templo') {
       return saved as ThemeType;
     }
-    // Fallback padrão: pergaminho (tema clássico das escrituras sagradas do app)
     return 'parchment';
   });
 
@@ -256,16 +307,21 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Sincroniza classes no elemento raiz (HTML) para que o Tailwind e CSS variables reajam
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.remove('dark', 'parchment-theme');
+    root.classList.remove('dark', 'dark-theme', 'parchment-theme', 'oliveira-theme', 'templo-theme');
 
-    const config = THEME_MODES[theme] || THEME_MODES.light;
+    const config = THEME_MODES[theme] || THEME_MODES.parchment;
     if (config && config.className) {
-      root.classList.add(config.className);
+      config.className.split(' ').forEach((cls) => {
+        if (cls) root.classList.add(cls);
+      });
     }
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : theme === 'light' ? 'parchment' : 'dark');
+    const order: ThemeType[] = ['parchment', 'dark', 'oliveira', 'templo'];
+    const currentIndex = order.indexOf(theme);
+    const nextTheme = order[(currentIndex + 1) % order.length];
+    setTheme(nextTheme);
   };
 
   const isDark = theme === 'dark';
