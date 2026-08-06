@@ -4,6 +4,8 @@ import { BibleBook, UserBookmark, UserHighlight, UserNote } from '../types';
 import { BIBLE_BOOKS, getBookById } from '../data/bibleBooks';
 import { searchBibleVerses } from '../services/bibleService';
 import { localDB } from '../utils/db';
+import { removeHighlight, subscribeUserHighlights } from '../services/highlightService';
+import { auth, onAuthStateChanged } from '../services/firebase';
 
 interface NotesAndSearchViewProps {
   onOpenVerse: (bookId: string, chapter: number) => void;
@@ -21,6 +23,20 @@ export const NotesAndSearchView: React.FC<NotesAndSearchViewProps> = ({ onOpenVe
     localDB.getNotes().then(setNotes);
     localDB.getHighlights().then(setHighlights);
     localDB.getBookmarks().then(setBookmarks);
+
+    let hlUnsub: (() => void) | null = null;
+    const authUnsub = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        hlUnsub = subscribeUserHighlights(user.uid, (remoteHLs) => {
+          setHighlights(remoteHLs);
+        });
+      }
+    });
+
+    return () => {
+      authUnsub();
+      if (hlUnsub) hlUnsub();
+    };
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -33,6 +49,12 @@ export const NotesAndSearchView: React.FC<NotesAndSearchViewProps> = ({ onOpenVe
   const handleDeleteNote = (id: string) => {
     localDB.deleteNote(id);
     setNotes((prev) => prev.filter((n) => n.id !== id));
+  };
+
+  const handleDeleteHighlight = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await removeHighlight(id);
+    setHighlights((prev) => prev.filter((h) => h.id !== id));
   };
 
   const handleExportBackup = async () => {
@@ -209,19 +231,46 @@ export const NotesAndSearchView: React.FC<NotesAndSearchViewProps> = ({ onOpenVe
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {highlights.map((h) => {
                 const book = getBookById(h.bookId);
+                const colorLabel =
+                  h.color === 'yellow' ? 'Ouro' :
+                  h.color === 'green' ? 'Esperança' :
+                  h.color === 'blue' ? 'Graça' :
+                  h.color === 'purple' ? 'Realeza' :
+                  h.color === 'pink' ? 'Amor' : h.color;
+
+                const colorDot =
+                  h.color === 'yellow' ? 'bg-amber-400' :
+                  h.color === 'green' ? 'bg-emerald-400' :
+                  h.color === 'blue' ? 'bg-sky-400' :
+                  h.color === 'purple' ? 'bg-purple-400' :
+                  h.color === 'pink' ? 'bg-rose-400' : 'bg-amber-400';
+
                 return (
                   <div
                     key={h.id}
                     onClick={() => onOpenVerse(h.bookId, h.chapter)}
-                    className="p-4 rounded-2xl bg-white dark:bg-stone-900 border border-amber-900/10 dark:border-stone-800 cursor-pointer hover:border-amber-600 transition-colors flex items-center justify-between"
+                    className="p-4 rounded-2xl bg-white dark:bg-stone-900 border border-amber-900/10 dark:border-stone-800 cursor-pointer hover:border-amber-600 transition-colors flex items-center justify-between group"
                   >
-                    <div>
-                      <span className="font-serif font-bold text-sm text-stone-900 dark:text-amber-100">
-                        {book ? book.name : h.bookId} {h.chapter}:{h.verse}
-                      </span>
-                      <span className="text-xs text-stone-500 block">Destaque {h.color}</span>
+                    <div className="flex items-center gap-3">
+                      <span className={`w-3 h-3 rounded-full ${colorDot} shrink-0`} />
+                      <div>
+                        <span className="font-serif font-bold text-sm text-stone-900 dark:text-amber-100">
+                          {book ? book.name : h.bookId} {h.chapter}:{h.verse}
+                        </span>
+                        <span className="text-xs text-stone-500 block">Destaque {colorLabel}</span>
+                      </div>
                     </div>
-                    <span className="text-xs text-amber-700 font-semibold">Ir para capítulo →</span>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={(e) => handleDeleteHighlight(h.id, e)}
+                        className="p-1.5 rounded-lg text-stone-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                        title="Excluir destaque"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                      <span className="text-xs text-amber-700 font-semibold group-hover:translate-x-0.5 transition-transform">Ir para →</span>
+                    </div>
                   </div>
                 );
               })}

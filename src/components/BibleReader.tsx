@@ -20,12 +20,55 @@ import {
   RefreshCw,
   Info,
   X,
-  ChevronUp
+  ChevronUp,
+  Cloud,
+  CloudCheck,
+  Trash2
 } from 'lucide-react';
 import { BibleBook, BibleVersionCode, ReaderSettings, UserBookmark, UserHighlight, UserNote, Verse } from '../types';
 import { fetchChapterVerses } from '../services/bibleService';
 import { localDB } from '../utils/db';
 import { VerseShareModal } from './VerseShareModal';
+import { saveHighlight, removeHighlight, subscribeUserHighlights } from '../services/highlightService';
+import { auth, onAuthStateChanged } from '../services/firebase';
+
+const HIGHLIGHT_COLORS = [
+  {
+    id: 'yellow',
+    name: 'Ouro (Amarelo)',
+    dotBg: 'bg-amber-400 border-amber-500',
+    containerStyle: 'bg-amber-100/90 dark:bg-amber-950/50 border-l-4 border-l-amber-500 border-amber-300/60 dark:border-amber-800/60 shadow-3xs p-3.5',
+    badgeStyle: 'bg-amber-200/80 dark:bg-amber-900/60 text-amber-950 dark:text-amber-200'
+  },
+  {
+    id: 'green',
+    name: 'Esperança (Verde)',
+    dotBg: 'bg-emerald-400 border-emerald-500',
+    containerStyle: 'bg-emerald-100/90 dark:bg-emerald-950/50 border-l-4 border-l-emerald-500 border-emerald-300/60 dark:border-emerald-800/60 shadow-3xs p-3.5',
+    badgeStyle: 'bg-emerald-200/80 dark:bg-emerald-900/60 text-emerald-950 dark:text-emerald-200'
+  },
+  {
+    id: 'blue',
+    name: 'Graça (Azul)',
+    dotBg: 'bg-sky-400 border-sky-500',
+    containerStyle: 'bg-sky-100/90 dark:bg-sky-950/50 border-l-4 border-l-sky-500 border-sky-300/60 dark:border-sky-800/60 shadow-3xs p-3.5',
+    badgeStyle: 'bg-sky-200/80 dark:bg-sky-900/60 text-sky-950 dark:text-sky-200'
+  },
+  {
+    id: 'purple',
+    name: 'Realeza (Roxo)',
+    dotBg: 'bg-purple-400 border-purple-500',
+    containerStyle: 'bg-purple-100/90 dark:bg-purple-950/50 border-l-4 border-l-purple-500 border-purple-300/60 dark:border-purple-800/60 shadow-3xs p-3.5',
+    badgeStyle: 'bg-purple-200/80 dark:bg-purple-900/60 text-purple-950 dark:text-purple-200'
+  },
+  {
+    id: 'pink',
+    name: 'Amor (Rosa)',
+    dotBg: 'bg-rose-400 border-rose-500',
+    containerStyle: 'bg-rose-100/90 dark:bg-rose-950/50 border-l-4 border-l-rose-500 border-rose-300/60 dark:border-rose-800/60 shadow-3xs p-3.5',
+    badgeStyle: 'bg-rose-200/80 dark:bg-rose-900/60 text-rose-950 dark:text-rose-200'
+  }
+];
 
 interface BibleReaderProps {
   currentBook: BibleBook;
@@ -56,6 +99,35 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   const [noteText, setNoteText] = useState('');
   const [copiedVerseNum, setCopiedVerseNum] = useState<number | null>(null);
   const [shareVerseModal, setShareVerseModal] = useState<Verse | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isFirebaseSynced, setIsFirebaseSynced] = useState<boolean>(false);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3200);
+  };
+
+  // Subscribe to realtime Firebase highlights when authenticated
+  useEffect(() => {
+    let hlUnsub: (() => void) | null = null;
+    const authUnsub = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsFirebaseSynced(true);
+        hlUnsub = subscribeUserHighlights(user.uid, (remoteHLs) => {
+          setHighlights(remoteHLs);
+        });
+      } else {
+        setIsFirebaseSynced(false);
+      }
+    });
+
+    return () => {
+      authUnsub();
+      if (hlUnsub) hlUnsub();
+    };
+  }, []);
 
   // AI Sacred Art / Image generation states
   const [showArtPanel, setShowArtPanel] = useState(false);
@@ -165,7 +237,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
     }
   }, [currentBook, currentChapter]);
 
-  // Load verses
+  // Load verses & local cached highlights
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
@@ -186,15 +258,16 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
     };
   }, [currentBook.id, currentChapter, settings.version]);
 
-  const handleToggleHighlight = (color: string) => {
+  const handleToggleHighlight = async (color: string) => {
     if (!selectedVerse) return;
     const existing = highlights.find(
       (h) => h.bookId === currentBook.id && h.chapter === currentChapter && h.verse === selectedVerse.verse
     );
 
     if (existing && existing.color === color) {
-      localDB.removeHighlight(existing.id);
+      await removeHighlight(existing.id);
       setHighlights((prev) => prev.filter((h) => h.id !== existing.id));
+      showToast(`Destaque removido do versículo ${selectedVerse.verse}`);
     } else {
       const newHL: UserHighlight = {
         id: `${currentBook.id}-${currentChapter}-${selectedVerse.verse}`,
@@ -204,10 +277,27 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
         color,
         createdAt: new Date().toISOString(),
       };
-      localDB.saveHighlight(newHL);
+      await saveHighlight(newHL);
       setHighlights((prev) => [...prev.filter((h) => h.id !== newHL.id), newHL]);
+
+      const colorObj = HIGHLIGHT_COLORS.find(c => c.id === color);
+      const colorName = colorObj ? colorObj.name : color;
+      const destination = auth.currentUser ? 'e sincronizado no Firebase' : 'no armazenamento local';
+      showToast(`Versículo ${selectedVerse.verse} destacado (${colorName}) ${destination}!`);
     }
   };
+
+  const handleRemoveHighlight = async (verseNum: number) => {
+    const existing = highlights.find(
+      (h) => h.bookId === currentBook.id && h.chapter === currentChapter && h.verse === verseNum
+    );
+    if (existing) {
+      await removeHighlight(existing.id);
+      setHighlights((prev) => prev.filter((h) => h.id !== existing.id));
+      showToast(`Destaque removido do versículo ${verseNum}`);
+    }
+  };
+
 
   const handleToggleBookmark = (v: Verse) => {
     const id = `${currentBook.id}-${currentChapter}-${v.verse}`;
@@ -612,16 +702,15 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                 (n) => n.bookId === currentBook.id && n.chapter === currentChapter && n.verse === v.verse
               );
 
-              // Render highlights inline or in gold containers (v4 highlighted in gold container)
-              const containerHL = hasHighlight && hasHighlight.color === 'yellow';
+              const hlColorObj = hasHighlight ? HIGHLIGHT_COLORS.find((c) => c.id === hasHighlight.color) : null;
 
               return (
                 <div
                   key={v.verse}
                   onClick={() => setSelectedVerse(v)}
                   className={`p-2 rounded-2xl transition-all cursor-pointer relative ${
-                    containerHL
-                      ? 'bg-[#D4A24C]/15 border border-[#D4A24C]/45 shadow-3xs p-3.5'
+                    hasHighlight && hlColorObj
+                      ? hlColorObj.containerStyle
                       : isSelected
                       ? 'bg-[#E7DECF]/30'
                       : ''
@@ -641,58 +730,97 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                       {v.text}
                     </p>
 
-                    {/* Note indicator icon */}
-                    {verseNotes.length > 0 && (
-                      <span className="p-1 rounded-full text-[#D4A24C] shrink-0" title="Ver anotação">
-                        <MessageSquare className="w-3.5 h-3.5" />
-                      </span>
-                    )}
+                    {/* Right side indicators */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {hasHighlight && hlColorObj && (
+                        <span
+                          className={`text-[9px] font-sans font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 ${hlColorObj.badgeStyle}`}
+                          title={`Destacado em ${hlColorObj.name}`}
+                        >
+                          <Highlighter className="w-2.5 h-2.5" />
+                          <span>{hlColorObj.name.split(' ')[0]}</span>
+                        </span>
+                      )}
+
+                      {verseNotes.length > 0 && (
+                        <span className="p-1 rounded-full text-[#D4A24C]" title="Ver anotação">
+                          <MessageSquare className="w-3.5 h-3.5" />
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Inline Action block for verse */}
                   {isSelected && (
-                    <div className="mt-3.5 pt-2.5 border-t border-[#E7DECF] dark:border-stone-800 flex items-center justify-between gap-2 animate-fade-in">
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleToggleHighlight('yellow'); }}
-                          className="w-4 h-4 rounded-full bg-amber-300 border border-amber-400"
-                        />
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleToggleHighlight('green'); }}
-                          className="w-4 h-4 rounded-full bg-emerald-300 border border-emerald-400"
-                        />
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleToggleHighlight('blue'); }}
-                          className="w-4 h-4 rounded-full bg-sky-300 border border-sky-400"
-                        />
+                    <div className="mt-3.5 pt-2.5 border-t border-[#E7DECF] dark:border-stone-800 flex flex-wrap items-center justify-between gap-2 animate-fade-in">
+                      {/* Color dots & remove button */}
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-sans font-bold text-stone-500 mr-1">Destaque:</span>
+                        {HIGHLIGHT_COLORS.map((col) => (
+                          <button
+                            key={col.id}
+                            title={`Destacar em ${col.name}`}
+                            onClick={(e) => { e.stopPropagation(); handleToggleHighlight(col.id); }}
+                            className={`w-5 h-5 rounded-full ${col.dotBg} transition-transform hover:scale-125 active:scale-95 ${
+                              hasHighlight?.color === col.id ? 'ring-2 ring-stone-900 dark:ring-stone-100 ring-offset-1' : ''
+                            }`}
+                          />
+                        ))}
+                        {hasHighlight && (
+                          <button
+                            title="Remover destaque deste versículo"
+                            onClick={(e) => { e.stopPropagation(); handleRemoveHighlight(v.verse); }}
+                            className="ml-1 p-1 rounded-lg text-rose-600 hover:bg-rose-100 dark:hover:bg-rose-950/40 text-[10px] font-sans font-bold flex items-center gap-1 cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Remover</span>
+                          </button>
+                        )}
                       </div>
 
-                      <div className="flex items-center gap-1">
+                      {/* Other actions & Firebase status indicator */}
+                      <div className="flex items-center gap-1.5">
+                        <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-sans text-stone-500 mr-1">
+                          {isFirebaseSynced ? (
+                            <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-semibold">
+                              <CloudCheck className="w-3 h-3" /> Firebase Sync
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-amber-700 dark:text-amber-400">
+                              <Cloud className="w-3 h-3" /> Local
+                            </span>
+                          )}
+                        </span>
+
                         <button
                           onClick={(e) => { e.stopPropagation(); handleToggleBookmark(v); }}
-                          className={`p-1.5 rounded-lg text-[10px] font-sans font-bold flex items-center gap-1 ${
+                          title="Marcar versículo"
+                          className={`p-1.5 rounded-lg text-[10px] font-sans font-bold flex items-center gap-1 cursor-pointer ${
                             isBookmarked ? 'bg-[#D4A24C] text-[#1F1B16]' : 'bg-[#F7F1E5] dark:bg-stone-850 text-theme-primary'
                           }`}
                         >
-                          <Bookmark className="w-3 h-3" />
+                          <Bookmark className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); setIsNoteInputOpen(true); }}
-                          className="p-1.5 rounded-lg text-[10px] font-sans font-bold bg-[#F7F1E5] dark:bg-stone-850 text-theme-primary flex items-center gap-1"
+                          title="Adicionar anotação"
+                          className="p-1.5 rounded-lg text-[10px] font-sans font-bold bg-[#F7F1E5] dark:bg-stone-850 text-theme-primary flex items-center gap-1 cursor-pointer"
                         >
-                          <MessageSquare className="w-3 h-3" />
+                          <MessageSquare className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleReadAloudVerse(v); }}
-                          className="p-1.5 rounded-lg text-[10px] font-sans font-bold bg-[#F7F1E5] dark:bg-stone-850 text-theme-primary flex items-center"
+                          title="Ouvir áudio"
+                          className="p-1.5 rounded-lg text-[10px] font-sans font-bold bg-[#F7F1E5] dark:bg-stone-850 text-theme-primary flex items-center cursor-pointer"
                         >
-                          <Volume2 className="w-3 h-3" />
+                          <Volume2 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleCopyVerse(v); }}
-                          className="p-1.5 rounded-lg text-[10px] font-sans font-bold bg-[#F7F1E5] dark:bg-stone-850 text-theme-primary flex items-center"
+                          title="Copiar versículo"
+                          className="p-1.5 rounded-lg text-[10px] font-sans font-bold bg-[#F7F1E5] dark:bg-stone-850 text-theme-primary flex items-center cursor-pointer"
                         >
-                          {copiedVerseNum === v.verse ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                          {copiedVerseNum === v.verse ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                         </button>
                       </div>
                     </div>
@@ -770,6 +898,28 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Share Modal */}
+      {shareVerseModal && (
+        <VerseShareModal
+          verse={shareVerseModal}
+          bookName={currentBook.name}
+          chapter={currentChapter}
+          onClose={() => setShareVerseModal(null)}
+        />
+      )}
+
+      {/* Floating Toast notification */}
+      {toastMessage && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full bg-stone-900 text-stone-100 dark:bg-amber-100 dark:text-stone-900 text-xs font-sans font-medium shadow-xl flex items-center gap-2 border border-stone-700/50 dark:border-amber-300 animate-fade-in">
+          {isFirebaseSynced ? (
+            <CloudCheck className="w-4 h-4 text-emerald-400 dark:text-emerald-600 shrink-0" />
+          ) : (
+            <Cloud className="w-4 h-4 text-amber-400 dark:text-amber-600 shrink-0" />
+          )}
+          <span>{toastMessage}</span>
         </div>
       )}
     </div>

@@ -1,0 +1,97 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile document",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["uid"]
+    },
+    "UserProgress": {
+      "title": "UserProgress",
+      "description": "User Bible reading progress",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "chaptersReadCount": { "type": "number" },
+        "readChapters": { "type": "array" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId"]
+    },
+    "Highlight": {
+      "title": "Highlight",
+      "description": "Highlighted verse in the Bible reader",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "bookId": { "type": "string" },
+        "chapter": { "type": "number" },
+        "verse": { "type": "number" },
+        "color": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "synchronizedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "bookId", "chapter", "verse", "color"]
+    },
+    "Note": {
+      "title": "Note",
+      "description": "Personal note on a verse",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "bookId": { "type": "string" },
+        "chapter": { "type": "number" },
+        "verse": { "type": "number" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "bookId", "chapter", "verse", "text"]
+    },
+    "Bookmark": {
+      "title": "Bookmark",
+      "description": "Bookmarked verse",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "bookId": { "type": "string" },
+        "chapter": { "type": "number" },
+        "verse": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "bookId", "chapter", "verse"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profile data"
+    },
+    "/userProgress/{userId}": {
+      "schema": { "$ref": "#/entities/UserProgress" },
+      "description": "User progress data"
+    },
+    "/highlights/{highlightId}": {
+      "schema": { "$ref": "#/entities/Highlight" },
+      "description": "User verse highlights"
+    },
+    "/notes/{noteId}": {
+      "schema": { "$ref": "#/entities/Note" },
+      "description": "User verse notes"
+    },
+    "/bookmarks/{bookmarkId}": {
+      "schema": { "$ref": "#/entities/Bookmark" },
+      "description": "User verse bookmarks"
+    }
+  }
+}
