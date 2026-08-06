@@ -20,6 +20,31 @@ export const OfflineManagerModal: React.FC<OfflineManagerModalProps> = ({ isOpen
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
 
   useEffect(() => {
+    let active = true;
+    const syncDbWithState = async () => {
+      const dbInstalled: string[] = [];
+      for (const code of ALL_AVAILABLE_VERSION_CODES) {
+        const isDownloaded = await localDB.isVersionDownloaded(code);
+        if (isDownloaded) {
+          dbInstalled.push(code);
+        }
+      }
+      const savedStr = localStorage.getItem('jornada_installed_versions');
+      const saved: string[] = savedStr ? JSON.parse(savedStr) : ['ARC', 'INTERLINEAR'];
+      const merged = Array.from(new Set([...saved, ...dbInstalled]));
+      if (active) {
+        setInstalledVersions(merged);
+      }
+    };
+    if (isOpen) {
+      syncDbWithState();
+    }
+    return () => {
+      active = false;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
     localStorage.setItem('jornada_installed_versions', JSON.stringify(installedVersions));
   }, [installedVersions]);
 

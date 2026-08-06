@@ -12,7 +12,7 @@ export type BookCategory =
   | 'Cartas Gerais'
   | 'Revelação';
 
-export type BibleVersionCode = 'ARC' | 'NAA' | 'NVI' | 'INTERLINEAR' | 'ORIGINAL';
+export type BibleVersionCode = 'ARC' | 'NAA' | 'NVI' | 'ACF' | 'KJA' | 'INTERLINEAR' | 'WLC' | 'SBLGNT' | 'ORIGINAL';
 
 export interface BibleVersion {
   code: BibleVersionCode;

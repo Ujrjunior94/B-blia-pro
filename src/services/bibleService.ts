@@ -23,11 +23,37 @@ export const BIBLE_VERSIONS: BibleVersion[] = [
     description: 'Tradução dinâmica com excelente fluidez e clareza para a linguagem moderna.',
   },
   {
+    code: 'ACF',
+    name: 'Almeida Corrigida Fiel',
+    language: 'Português',
+    description: 'Tradução de relevância litúrgica que segue rigidamente os manuscritos tradicionais (Textus Receptus).',
+  },
+  {
+    code: 'KJA',
+    name: 'King James Atualizada',
+    language: 'Português',
+    description: 'Tradução moderna a partir do clássico texto bíblico de 1611, com notas teológicas profundas.',
+  },
+  {
     code: 'INTERLINEAR',
     name: 'Interlinear Hebraico / Grego + Português',
     language: 'Original + Português',
     isOriginal: true,
     description: 'Texto original com transliteração, números de Strong e análise gramatical palavra por palavra.',
+  },
+  {
+    code: 'WLC',
+    name: 'Hebraico - Westminster Leningrad Codex (WLC)',
+    language: 'Hebraico',
+    isOriginal: true,
+    description: 'Texto masorético tradicional das Escrituras Hebraicas com acentuação e pontuação vocálica.',
+  },
+  {
+    code: 'SBLGNT',
+    name: 'Grego - SBLGNT + Nestle-Aland 28ª Ed.',
+    language: 'Grego',
+    isOriginal: true,
+    description: 'Edição crítica do Novo Testamento grego estabelecida pela Society of Biblical Literature.',
   },
 ];
 
