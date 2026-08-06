@@ -839,14 +839,14 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
                   <button
                     onClick={() => {
                       // Fallback instantly to beautiful Unsplash URL without API call
-                      const keywords = `${currentBook.name.toLowerCase()},bible,light`;
-                      const seed = `${currentBook.id.toLowerCase()}-${currentChapter}`;
+                      const artPrompt = `Detailed biblical scene of ${currentBook.name} chapter ${currentChapter}, sacred art, cinematic lighting, masterpiece`;
+                      const seed = Math.floor(Math.random() * 1000000);
                       const fallbackArt = {
                         title: `${currentBook.name} ${currentChapter}`,
                         artPromptDesc: `Ilustração inspiradora baseada nas verdades de ${currentBook.name} ${currentChapter}.`,
                         theologicalMeaning: `Uma visualização artística criada para refletir a luz de Cristo nas escrituras.`,
-                        imageUrl: `https://images.unsplash.com/featured/800x450/?${encodeURIComponent(keywords)}&sig=${encodeURIComponent(seed)}`,
-                        usedRealGenerator: false,
+                        imageUrl: `https://image.pollinations.ai/prompt/${encodeURIComponent(artPrompt)}?width=1024&height=576&seed=${seed}&nologo=true`,
+                        usedRealGenerator: true,
                         style: artStyle
                       };
                       setChapterArt(fallbackArt);

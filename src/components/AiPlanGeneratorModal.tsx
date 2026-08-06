@@ -3,6 +3,8 @@ import { Sparkles, X, BookOpen, Clock, Calendar, Check, AlertCircle, ArrowRight,
 import { CustomReadingPlan, ReadingPlanDay } from '../types';
 import { getBookById } from '../data/bibleBooks';
 
+import { generateAiReadingPlan } from '../services/ai/readingPlan';
+
 interface AiPlanGeneratorModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -47,22 +49,16 @@ export const AiPlanGeneratorModal: React.FC<AiPlanGeneratorModalProps> = ({
     setGeneratedPlanData(null);
 
     try {
-      const response = await fetch('/api/theology/generate-reading-plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          topic: topic.trim(),
-          durationDays,
-          focusLevel
-        })
+      const planRes = await generateAiReadingPlan({
+        topic: topic.trim(),
+        valor: topic.trim(),
+        dias: durationDays,
       });
 
-      const data = await response.json();
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Falha ao gerar o plano de leitura com IA.');
-      }
-
-      setGeneratedPlanData(data.plan);
+      setGeneratedPlanData({
+        ...planRes,
+        days: planRes.cronograma,
+      });
     } catch (err: any) {
       console.error('Error generating AI plan:', err);
       setError(err.message || 'Erro ao conectar com o serviço de IA. Tente novamente.');

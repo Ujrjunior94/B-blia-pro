@@ -219,13 +219,13 @@ Forneça detalhes teológicos profundos de como os elementos visuais simbolizam 
         console.warn('Real image generator failed or quota exceeded, falling back to dynamic Unsplash visual asset:', imageError.message);
       }
 
-      // If real generator wasn't successful, build a beautiful Unsplash fallback URL
+      // If real generator wasn't successful, build a high-quality Pollinations AI generated image URL from prompt
       let finalImageUrl = imageBase64;
       if (!finalImageUrl) {
-        const keywords = (metadata.unsplashSearchKeywords || ['bible', 'spiritual', 'light']).join(',');
-        // We can append a random key or use a deterministic seed based on book and chapter to fetch a consistent image
-        const seed = `${bookId.toLowerCase()}-${chapter}`;
-        finalImageUrl = `https://images.unsplash.com/featured/800x450/?${encodeURIComponent(keywords)}&sig=${encodeURIComponent(seed)}`;
+        const artPrompt = metadata.englishArtPrompt || `Biblical illustration of ${bookId} chapter ${chapter}, ${styleName} style, dramatic lighting, detailed art`;
+        const seed = Math.floor(Math.random() * 1000000);
+        finalImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(artPrompt)}?width=1024&height=576&seed=${seed}&nologo=true`;
+        usedRealGenerator = true;
       }
 
       res.json({
@@ -330,9 +330,10 @@ A imagem deve ser um plano de fundo atmosférico, sereno, com espaço central ad
 
       let finalImageUrl = imageBase64;
       if (!finalImageUrl) {
-        const keywords = (metadata.unsplashSearchKeywords || ['nature', 'sunrise', 'peace']).join(',');
-        const seed = `${bookName.toLowerCase()}-${chapter}-${verseNum}`;
-        finalImageUrl = `https://images.unsplash.com/featured/1080x1920/?${encodeURIComponent(keywords)}&sig=${encodeURIComponent(seed)}`;
+        const artPrompt = metadata.englishArtPrompt || `Vertical devotional background card of ${bookName} ${chapter}:${verseNum}, ${styleName} style, atmospheric lighting`;
+        const seed = Math.floor(Math.random() * 1000000);
+        finalImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(artPrompt)}?width=720&height=1280&seed=${seed}&nologo=true`;
+        usedRealGenerator = true;
       }
 
       res.json({
@@ -417,6 +418,328 @@ Certifique-se de que os livros bíblicos fornecidos usem os IDs de 3 letras padr
     } catch (error: any) {
       console.error('Erro ao gerar plano de leitura com IA:', error);
       res.status(500).json({ error: error.message || 'Erro ao gerar plano de leitura personalizado.' });
+    }
+  });
+
+  // ==========================================
+  // MÓDULOS DE IA UNIFICADOS (/api/ai/*)
+  // ==========================================
+
+  // MÓDULO 2 — GERADOR DE ESTUDOS
+  app.post('/api/ai/study', async (req, res) => {
+    try {
+      const { tema, livro, capitulo, versiculos, duracao = '15 min', nivelUsuario = 'Intermediário', objetivoEstudo } = req.body;
+      if (!tema && !livro) {
+        res.status(400).json({ error: 'Informe um tema ou uma passagem bíblica para o estudo.' });
+        return;
+      }
+
+      const ai = getAiClient();
+      const promptText = `Gere um estudo bíblico completo, profundo e altamente estruturado em JSON sobre:
+Tema: "${tema || 'Estudo Geral'}"
+Livro/Capítulo/Versículos: "${livro || ''} ${capitulo || ''} ${versiculos || ''}"
+Nível do Usuário: "${nivelUsuario}"
+Duração de Leitura: "${duracao}"
+Objetivo: "${objetivoEstudo || 'Crescimento e edificação espiritual'}"
+
+Divida o texto em seções curtas e de fácil leitura.`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.6-flash',
+        contents: promptText,
+        config: {
+          systemInstruction: 'Você é um teólogo, exégeta e professor de teologia bíblica. Gere estudos estruturados estritamente em JSON no schema solicitado.',
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              titulo: { type: Type.STRING },
+              resumo: { type: Type.STRING },
+              introducao: { type: Type.STRING },
+              contextoHistorico: { type: Type.STRING },
+              contextoGeografico: { type: Type.STRING },
+              personagens: { type: Type.ARRAY, items: { type: Type.STRING } },
+              analiseTexto: { type: Type.STRING },
+              palavrasChave: { type: Type.ARRAY, items: { type: Type.STRING } },
+              referenciasCruzadas: { type: Type.ARRAY, items: { type: Type.STRING } },
+              aplicacoesPraticas: { type: Type.ARRAY, items: { type: Type.STRING } },
+              perguntasReflexao: { type: Type.ARRAY, items: { type: Type.STRING } },
+              oracaoSugerida: { type: Type.STRING },
+              planoComplementar: { type: Type.STRING },
+              fontesBiblicas: { type: Type.ARRAY, items: { type: Type.STRING } },
+            },
+            required: [
+              'titulo',
+              'resumo',
+              'introducao',
+              'contextoHistorico',
+              'analiseTexto',
+              'palavrasChave',
+              'referenciasCruzadas',
+              'aplicacoesPraticas',
+              'perguntasReflexao',
+              'oracaoSugerida',
+              'fontesBiblicas'
+            ]
+          }
+        }
+      });
+
+      const study = JSON.parse(response.text || '{}');
+      res.json({ success: true, study });
+    } catch (error: any) {
+      console.error('Erro em /api/ai/study:', error);
+      res.status(500).json({ error: error.message || 'Erro ao gerar estudo bíblico.' });
+    }
+  });
+
+  // MÓDULO 3 — DEVOCIONAL INTELIGENTE
+  app.post('/api/ai/devotional', async (req, res) => {
+    try {
+      const { planoAtual, historicoUsuario, tempoDisponivel = '10 min', temaOuEmocao = 'Paz e Esperança' } = req.body;
+      const ai = getAiClient();
+
+      const promptText = `Gere um devocional personalizado diário para o leitor:
+Tema/Emoção: "${temaOuEmocao}"
+Tempo disponível: "${tempoDisponivel}"
+Plano Atual: "${planoAtual || 'Leitura Diária Geral'}"
+Histórico/Contexto: "${historicoUsuario || 'Busca crescimento cristão e direção espiritual'}"`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.6-flash',
+        contents: promptText,
+        config: {
+          systemInstruction: 'Você é um pastor e escritor devocional. Gere devocionais inspiradores, breves e centrados nas Escrituras estritamente em JSON.',
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              versiculoDoDia: {
+                type: Type.OBJECT,
+                properties: {
+                  referencia: { type: Type.STRING },
+                  texto: { type: Type.STRING }
+                },
+                required: ['referencia', 'texto']
+              },
+              reflexao: { type: Type.STRING },
+              aplicacao: { type: Type.STRING },
+              oracao: { type: Type.STRING },
+              desafioPratico: { type: Type.STRING },
+              leituraComplementar: { type: Type.STRING },
+            },
+            required: ['versiculoDoDia', 'reflexao', 'aplicacao', 'oracao', 'desafioPratico', 'leituraComplementar']
+          }
+        }
+      });
+
+      const devotional = JSON.parse(response.text || '{}');
+      res.json({ success: true, devotional });
+    } catch (error: any) {
+      console.error('Erro em /api/ai/devotional:', error);
+      res.status(500).json({ error: error.message || 'Erro ao gerar devocional inteligente.' });
+    }
+  });
+
+  // MÓDULO 4 — ASSISTENTE BÍBLICO
+  app.post('/api/ai/chat', async (req, res) => {
+    try {
+      const { message, history } = req.body;
+      if (!message || typeof message !== 'string') {
+        res.status(400).json({ error: 'Mensagem inválida.' });
+        return;
+      }
+
+      const ai = getAiClient();
+      const systemInstruction = `Você é um Teólogo e Educador Bíblico Sênior especializado no "Bíblia-Pro".
+Suas diretrizes fundamentais:
+1. Responda a dúvidas bíblicas com profundidade, precisão exegética e tom respeitoso e acolhedor.
+2. Explique o contexto histórico, cultural e literário dos textos bíblicos.
+3. Diferencie claramente entre:
+   - Fatos explícitos no texto sagrado;
+   - Contexto histórico-cultural;
+   - Interpretações e tradições teológicas.
+4. Quando houver diferentes interpretações cristãs tradicionais e relevantes sobre um tema, apresente-as de forma respeitosa, neutra e edificante, sem afirmar que apenas uma visão é a correta.
+5. Cite SEMPRE as referências bíblicas utilizadas (Livro Capítulo:Versículo).
+6. Sugira leituras complementares relevantes ao final.`;
+
+      const prompt = `Pergunta do usuário: "${message}"`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.6-flash',
+        contents: prompt,
+        config: {
+          systemInstruction,
+          temperature: 0.6,
+        },
+      });
+
+      const replyText = response.text || 'Não foi possível gerar uma resposta teológica no momento.';
+      res.json({ success: true, reply: replyText });
+    } catch (error: any) {
+      console.error('Erro em /api/ai/chat:', error);
+      res.status(500).json({ error: error.message || 'Erro no assistente bíblico.' });
+    }
+  });
+
+  // MÓDULO 5 — PLANOS COM IA (Alias unificado)
+  app.post('/api/ai/reading-plan', async (req, res) => {
+    try {
+      const { tipo = 'tema', valor = 'Crescimento Espiritual', dias = 30, topic, durationDays } = req.body;
+      const actualTopic = topic || valor;
+      const actualDays = durationDays || dias;
+
+      const ai = getAiClient();
+      const promptText = `Crie um plano de leitura bíblica personalizado de exatamente ${actualDays} dias baseado em:
+Tipo/Categoria: "${tipo}"
+Valor/Tema: "${actualTopic}"
+
+Certifique-se de que os livros bíblicos fornecidos usem os IDs de 3 letras padrão em maiúsculas (ex: GEN, EXO, LEV, NUM, DEU, PSA, PRO, ISA, JER, MAT, MRK, LUK, JHN, ACT, ROM, 1CO, 2CO, GAL, EPH, PHP, COL, 1TH, 2TH, 1TI, 2TI, HEB, JAS, 1PE, 2PE, 1JN, REV, etc).`;
+
+      const metadataResponse = await ai.models.generateContent({
+        model: 'gemini-3.6-flash',
+        contents: promptText,
+        config: {
+          systemInstruction: 'Você é um teólogo e educador bíblico. Monte planos de leitura pedagógicos, edificantes e centrados em Cristo estritamente em JSON.',
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              titulo: { type: Type.STRING },
+              descricao: { type: Type.STRING },
+              objetivo: { type: Type.STRING },
+              tema: { type: Type.STRING },
+              cronograma: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    dia: { type: Type.INTEGER },
+                    titulo: { type: Type.STRING },
+                    passageRef: { type: Type.STRING },
+                    bookId: { type: Type.STRING },
+                    chapter: { type: Type.INTEGER },
+                    verses: { type: Type.STRING },
+                    reflexao: { type: Type.STRING },
+                    oracao: { type: Type.STRING },
+                    desafioDiario: { type: Type.STRING },
+                  },
+                  required: ['dia', 'titulo', 'passageRef', 'bookId', 'chapter', 'reflexao']
+                }
+              }
+            },
+            required: ['titulo', 'descricao', 'objetivo', 'tema', 'cronograma']
+          }
+        }
+      });
+
+      const planData = JSON.parse(metadataResponse.text || '{}');
+      res.json({ success: true, plan: planData });
+    } catch (error: any) {
+      console.error('Erro em /api/ai/reading-plan:', error);
+      res.status(500).json({ error: error.message || 'Erro ao gerar plano de leitura.' });
+    }
+  });
+
+  // MÓDULO 6 — GERAÇÃO DE IMAGENS
+  app.post('/api/ai/image', async (req, res) => {
+    try {
+      const { tipo = 'ilustracao', descricao, estilo = 'Arte Sacra Histórica', resolucao = '16:9' } = req.body;
+      if (!descricao || typeof descricao !== 'string' || !descricao.trim()) {
+        res.status(400).json({ error: 'Descrição da imagem é obrigatória.' });
+        return;
+      }
+
+      const cleanDesc = descricao.trim();
+      const cleanEstilo = (typeof estilo === 'string' && estilo.trim()) ? estilo.trim() : 'Arte Sacra Histórica';
+      const cleanTipo = typeof tipo === 'string' ? tipo : 'ilustracao';
+      const validAspectRatio = ['16:9', '1:1', '9:16', '4:3', '3:4', '2:3', '3:2'].includes(resolucao) ? resolucao : '16:9';
+
+      const ai = getAiClient();
+      const promptText = `Crie o conceito visual e descrição detalhada em inglês para a geração de imagem bíblica do tipo "${cleanTipo}":
+Descrição: "${cleanDesc}"
+Estilo desejado: "${cleanEstilo}"
+Proporção visual/Resolução: "${validAspectRatio}"`;
+
+      const metadataResponse = await ai.models.generateContent({
+        model: 'gemini-3.6-flash',
+        contents: promptText,
+        config: {
+          systemInstruction: 'Você é um diretor de arte e historiador bíblico. Forneça prompts poéticos e detalhados em inglês para gerador de imagem.',
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              englishArtPrompt: { type: Type.STRING },
+              portugueseTitle: { type: Type.STRING },
+              portugueseDesc: { type: Type.STRING },
+              keywords: { type: Type.ARRAY, items: { type: Type.STRING } }
+            },
+            required: ['englishArtPrompt', 'portugueseTitle', 'portugueseDesc', 'keywords']
+          }
+        }
+      });
+
+      const metadata = JSON.parse(metadataResponse.text || '{}');
+
+      let imageBase64: string | null = null;
+      let usedRealGenerator = false;
+
+      try {
+        const imageGenResponse = await ai.models.generateContent({
+          model: 'gemini-3.1-flash-lite-image',
+          contents: {
+            parts: [{ text: metadata.englishArtPrompt || `A detailed biblical illustration of ${cleanDesc} in ${cleanEstilo} style.` }]
+          },
+          config: {
+            imageConfig: {
+              aspectRatio: validAspectRatio,
+            }
+          }
+        });
+
+        if (imageGenResponse.candidates?.[0]?.content?.parts) {
+          for (const part of imageGenResponse.candidates[0].content.parts) {
+            if (part.inlineData) {
+              imageBase64 = `data:image/png;base64,${part.inlineData.data}`;
+              usedRealGenerator = true;
+              break;
+            }
+          }
+        }
+      } catch (imgErr: any) {
+        console.warn('Gerador real de imagem indisponível no momento:', imgErr.message);
+      }
+
+      let finalImageUrl = imageBase64;
+      if (!finalImageUrl) {
+        const artPrompt = metadata.englishArtPrompt || `Biblical artwork of ${cleanDesc}, ${cleanEstilo} style, dramatic lighting, masterpiece`;
+        const seed = Math.floor(Math.random() * 1000000);
+        
+        let width = 1024;
+        let height = 576;
+        if (validAspectRatio === '1:1') { width = 1024; height = 1024; }
+        else if (validAspectRatio === '9:16') { width = 576; height = 1024; }
+        else if (validAspectRatio === '4:3') { width = 1024; height = 768; }
+
+        finalImageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(artPrompt)}?width=${width}&height=${height}&seed=${seed}&nologo=true`;
+        usedRealGenerator = true;
+      }
+
+      res.json({
+        success: true,
+        imageUrl: finalImageUrl,
+        titulo: metadata.portugueseTitle || 'Ilustração Bíblica',
+        descricao: metadata.portugueseDesc || 'Conceito visual para edificação e estudo bíblico.',
+        avisoIsencao: 'Esta imagem é uma ilustração conceitual gerada por Inteligência Artificial.',
+        usedRealGenerator,
+        estilo: cleanEstilo,
+        resolucao: validAspectRatio,
+      });
+
+    } catch (error: any) {
+      console.error('Erro em /api/ai/image:', error);
+      res.status(500).json({ error: error.message || 'Erro ao gerar ilustração bíblica.' });
     }
   });
 
