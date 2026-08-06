@@ -6,8 +6,6 @@ import {
   signOut, 
   onAuthStateChanged,
   signInAnonymously,
-  GoogleAuthProvider,
-  signInWithPopup,
   User as FirebaseUser
 } from 'firebase/auth';
 import { 
@@ -47,8 +45,6 @@ export {
   signOut, 
   onAuthStateChanged,
   signInAnonymously,
-  GoogleAuthProvider,
-  signInWithPopup,
   doc,
   getDoc,
   setDoc,
@@ -60,3 +56,4 @@ export {
   serverTimestamp
 };
 export type { FirebaseUser };
+

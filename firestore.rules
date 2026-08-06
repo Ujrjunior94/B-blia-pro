@@ -1,36 +1,65 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Check if user is authenticated
-    function isAuthenticated() {
+
+    // Default deny rule for any unmentioned path
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
       return request.auth != null;
     }
 
-    // Check if user is accessing their own document
     function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Rules for user profile and settings
+    function isUserResource() {
+      return isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    function isSettingUserResource() {
+      return isSignedIn() && request.resource.data.userId == request.auth.uid;
+    }
+
+    // Users collection: Each authenticated user can only read and write their own document matching their UID
     match /users/{userId} {
       allow read, write: if isOwner(userId);
     }
 
-    // Rules for user's subcollections or documents with userId field
+    // User Progress collection: Restricted to the document owner (UID)
+    match /userProgress/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Desafio Progress collection: Restricted to the document owner (UID)
+    match /desafioProgress/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // User Settings collection: Restricted to the document owner (UID)
+    match /userSettings/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Highlights collection: User can only create, read, update, or delete their own highlights
     match /highlights/{highlightId} {
-      allow read, write: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid) && (request.resource == null || request.resource.data.userId == request.auth.uid);
+      allow create: if isSettingUserResource();
+      allow read, update, delete: if isUserResource();
     }
 
+    // Notes collection: User can only create, read, update, or delete their own notes
     match /notes/{noteId} {
-      allow read, write: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid) && (request.resource == null || request.resource.data.userId == request.auth.uid);
+      allow create: if isSettingUserResource();
+      allow read, update, delete: if isUserResource();
     }
 
-    match /desafioProgress/{docId} {
-      allow read, write: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid) && (request.resource == null || request.resource.data.userId == request.auth.uid);
-    }
-
-    match /userSettings/{docId} {
-      allow read, write: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid) && (request.resource == null || request.resource.data.userId == request.auth.uid);
+    // Bookmarks collection: User can only create, read, update, or delete their own bookmarks
+    match /bookmarks/{bookmarkId} {
+      allow create: if isSettingUserResource();
+      allow read, update, delete: if isUserResource();
     }
   }
 }

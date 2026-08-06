@@ -4,8 +4,8 @@ import { ReaderSettings } from '../types';
 import { auth, onAuthStateChanged } from '../services/firebase';
 
 interface HeaderProps {
-  activeTab: 'home' | 'reader' | 'interlinear' | 'dictionary' | 'characters' | 'maps' | 'study' | 'challenge' | 'notes' | 'ai' | 'devotional';
-  setActiveTab: (tab: 'home' | 'reader' | 'interlinear' | 'dictionary' | 'characters' | 'maps' | 'study' | 'challenge' | 'notes' | 'ai' | 'devotional') => void;
+  activeTab: 'home' | 'reader' | 'interlinear' | 'dictionary' | 'characters' | 'study' | 'challenge' | 'notes' | 'ai' | 'devotional';
+  setActiveTab: (tab: 'home' | 'reader' | 'interlinear' | 'dictionary' | 'characters' | 'study' | 'challenge' | 'notes' | 'ai' | 'devotional') => void;
   settings: ReaderSettings;
   setSettings: React.Dispatch<React.SetStateAction<ReaderSettings>>;
   onOpenBookSelector: () => void;
@@ -143,7 +143,6 @@ export const Header: React.FC<HeaderProps> = ({
           { id: 'interlinear', label: 'Texto Original', icon: Layers, color: 'text-indigo-600' },
           { id: 'dictionary', label: 'Dicionário', icon: Book, color: 'text-emerald-600' },
           { id: 'characters', label: 'Personagens', icon: Users, color: 'text-orange-600' },
-          { id: 'maps', label: 'Mapas', icon: Compass, color: 'text-blue-600' },
           { id: 'study', label: 'Estudo por Livro', icon: Sparkles, color: 'text-amber-500' },
           { id: 'challenge', label: 'Desafio 365 Dias', icon: Flame, color: 'text-red-500 animate-pulse' },
           { id: 'notes', label: 'Busca & Notas', icon: Search, color: 'text-rose-500' },

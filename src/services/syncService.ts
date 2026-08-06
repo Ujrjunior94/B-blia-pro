@@ -1,17 +1,69 @@
 import { db, doc, getDoc, setDoc, collection, query, where, getDocs, deleteDoc } from './firebase';
 import { localDB } from '../utils/db';
-import { UserBookmark, UserHighlight, UserNote } from '../types';
+import { UserBookmark, UserHighlight, UserNote, UserProgress } from '../types';
 
 export interface SyncStats {
   highlightsSynced: number;
   notesSynced: number;
   bookmarksSynced: number;
   desafioSynced: boolean;
+  userProgressInitialized: boolean;
+}
+
+/**
+ * Initializes a clean zeroed user progress record in Firebase Firestore
+ * strictly tied to the provided userId.
+ */
+export async function initializeUserProgressInFirebase(userId: string): Promise<UserProgress> {
+  // 1. Reset local storage & IndexedDB to clean state
+  await localDB.clearUserData();
+  localStorage.setItem('jornada_desafio_365_progress', JSON.stringify({
+    completedDays: [],
+    weeklyNotes: {},
+    weeklyPrayers: {}
+  }));
+
+  const initialProgress: UserProgress = {
+    userId,
+    chaptersReadCount: 0,
+    readChapters: [],
+    activePlans: [],
+    planProgress: {},
+    desafioCompletedDays: [],
+    monthlyDevotionalsCompletions: {},
+    monthlyDevotionalsJournals: {},
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  // 2. Persist zero progress directly to Firebase Firestore
+  await setDoc(doc(db, 'userProgress', userId), initialProgress);
+  await setDoc(doc(db, 'desafioProgress', userId), {
+    completedDays: [],
+    weeklyNotes: {},
+    weeklyPrayers: {},
+    userId,
+    updatedAt: new Date().toISOString()
+  });
+
+  return initialProgress;
+}
+
+/**
+ * Saves or updates user progress in Firebase Firestore for a specific userId.
+ */
+export async function saveUserProgressToFirebase(userId: string, progress: Partial<UserProgress>): Promise<void> {
+  const userProgressRef = doc(db, 'userProgress', userId);
+  await setDoc(userProgressRef, {
+    ...progress,
+    userId,
+    updatedAt: new Date().toISOString()
+  }, { merge: true });
 }
 
 /**
  * Synchronizes local IndexedDB data with Firebase Firestore for the authenticated user.
- * Merges both data sources by keeping all items and resolving conflicts (most recently updated/created).
+ * Ensures new accounts or accounts without progress start strictly from zero.
  */
 export async function syncUserData(userId: string): Promise<SyncStats> {
   const stats: SyncStats = {
@@ -19,6 +71,7 @@ export async function syncUserData(userId: string): Promise<SyncStats> {
     notesSynced: 0,
     bookmarksSynced: 0,
     desafioSynced: false,
+    userProgressInitialized: false,
   };
 
   try {
@@ -29,11 +82,10 @@ export async function syncUserData(userId: string): Promise<SyncStats> {
     const remoteHighlightsSnap = await getDocs(highlightsQuery);
     
     const remoteHighlightsMap = new Map<string, any>();
-    remoteHighlightsSnap.forEach((doc) => {
-      remoteHighlightsMap.set(doc.id, doc.data());
+    remoteHighlightsSnap.forEach((docSnap) => {
+      remoteHighlightsMap.set(docSnap.id, docSnap.data());
     });
 
-    // Upload local highlights that don't exist remotely or are newer
     for (const hl of localHighlights) {
       const remoteHl = remoteHighlightsMap.get(hl.id);
       if (!remoteHl) {
@@ -46,11 +98,10 @@ export async function syncUserData(userId: string): Promise<SyncStats> {
       }
     }
 
-    // Download remote highlights that don't exist locally
     for (const [id, remoteHl] of remoteHighlightsMap.entries()) {
       const localExists = localHighlights.some(hl => hl.id === id);
       if (!localExists) {
-        const { userId, synchronizedAt, ...hlData } = remoteHl;
+        const { userId: uid, synchronizedAt, ...hlData } = remoteHl;
         await localDB.saveHighlight(hlData as UserHighlight);
         stats.highlightsSynced++;
       }
@@ -63,11 +114,10 @@ export async function syncUserData(userId: string): Promise<SyncStats> {
     const remoteNotesSnap = await getDocs(notesQuery);
 
     const remoteNotesMap = new Map<string, any>();
-    remoteNotesSnap.forEach((doc) => {
-      remoteNotesMap.set(doc.id, doc.data());
+    remoteNotesSnap.forEach((docSnap) => {
+      remoteNotesMap.set(docSnap.id, docSnap.data());
     });
 
-    // Upload local notes
     for (const note of localNotes) {
       const remoteNote = remoteNotesMap.get(note.id);
       if (!remoteNote || new Date(note.updatedAt) > new Date(remoteNote.updatedAt)) {
@@ -80,11 +130,10 @@ export async function syncUserData(userId: string): Promise<SyncStats> {
       }
     }
 
-    // Download remote notes
     for (const [id, remoteNote] of remoteNotesMap.entries()) {
       const localNote = localNotes.find(n => n.id === id);
       if (!localNote || new Date(remoteNote.updatedAt) > new Date(localNote.updatedAt)) {
-        const { userId, synchronizedAt, ...noteData } = remoteNote;
+        const { userId: uid, synchronizedAt, ...noteData } = remoteNote;
         await localDB.saveNote(noteData as UserNote);
         stats.notesSynced++;
       }
@@ -97,11 +146,10 @@ export async function syncUserData(userId: string): Promise<SyncStats> {
     const remoteBookmarksSnap = await getDocs(bookmarksQuery);
 
     const remoteBookmarksMap = new Map<string, any>();
-    remoteBookmarksSnap.forEach((doc) => {
-      remoteBookmarksMap.set(doc.id, doc.data());
+    remoteBookmarksSnap.forEach((docSnap) => {
+      remoteBookmarksMap.set(docSnap.id, docSnap.data());
     });
 
-    // Upload local bookmarks
     for (const bm of localBookmarks) {
       const remoteBm = remoteBookmarksMap.get(bm.id);
       if (!remoteBm) {
@@ -114,59 +162,81 @@ export async function syncUserData(userId: string): Promise<SyncStats> {
       }
     }
 
-    // Download remote bookmarks
     for (const [id, remoteBm] of remoteBookmarksMap.entries()) {
       const localExists = localBookmarks.some(bm => bm.id === id);
       if (!localExists) {
-        const { userId, synchronizedAt, ...bmData } = remoteBm;
+        const { userId: uid, synchronizedAt, ...bmData } = remoteBm;
         await localDB.saveBookmark(bmData as UserBookmark);
         stats.bookmarksSynced++;
       }
     }
 
-    // 4. Sync Desafio Progress (from localStorage)
+    // 4. User Progress & Zero-state verification in Firebase
+    const userProgressRef = doc(db, 'userProgress', userId);
+    const userProgressSnap = await getDoc(userProgressRef);
+
+    if (!userProgressSnap.exists()) {
+      // User has no progress record in Firebase -> initialize from zero
+      await initializeUserProgressInFirebase(userId);
+      stats.userProgressInitialized = true;
+    } else {
+      // Load progress from Firebase
+      const remoteProgress = userProgressSnap.data() as UserProgress;
+      if (remoteProgress.desafioCompletedDays) {
+        const localDesafioRaw = localStorage.getItem('jornada_desafio_365_progress');
+        const localDesafio = localDesafioRaw ? JSON.parse(localDesafioRaw) : { completedDays: [], weeklyNotes: {}, weeklyPrayers: {} };
+
+        const mergedDesafio = {
+          completedDays: Array.from(new Set([...(localDesafio.completedDays || []), ...(remoteProgress.desafioCompletedDays || [])])),
+          weeklyNotes: { ...(localDesafio.weeklyNotes || {}), ...(remoteProgress.monthlyDevotionalsJournals || {}) },
+          weeklyPrayers: localDesafio.weeklyPrayers || {}
+        };
+        localStorage.setItem('jornada_desafio_365_progress', JSON.stringify(mergedDesafio));
+      }
+    }
+
+    // 5. Sync Desafio Progress
     const localDesafioRaw = localStorage.getItem('jornada_desafio_365_progress');
     const desafioDocRef = doc(db, 'desafioProgress', userId);
 
     if (localDesafioRaw) {
       const localDesafio = JSON.parse(localDesafioRaw);
-      
-      // Fetch remote progress
       const remoteDesafioSnap = await getDoc(desafioDocRef);
       if (remoteDesafioSnap.exists()) {
         const remoteDesafio = remoteDesafioSnap.data();
-        
-        // Merge completed days array and notes/prayers objects
         const mergedCompletedDays = Array.from(new Set([
           ...(localDesafio.completedDays || []),
           ...(remoteDesafio.completedDays || [])
         ]));
-
         const mergedNotes = {
           ...(remoteDesafio.weeklyNotes || {}),
           ...(localDesafio.weeklyNotes || {})
         };
-
         const mergedPrayers = {
           ...(remoteDesafio.weeklyPrayers || {}),
           ...(localDesafio.weeklyPrayers || {})
         };
-
         const mergedDesafio = {
           completedDays: mergedCompletedDays,
           weeklyNotes: mergedNotes,
           weeklyPrayers: mergedPrayers
         };
 
-        // Write merged back to both places
         localStorage.setItem('jornada_desafio_365_progress', JSON.stringify(mergedDesafio));
         await setDoc(desafioDocRef, {
           ...mergedDesafio,
           userId,
           updatedAt: new Date().toISOString()
         });
+
+        // Also update userProgress doc
+        await setDoc(userProgressRef, {
+          userId,
+          chaptersReadCount: mergedCompletedDays.length,
+          desafioCompletedDays: mergedCompletedDays,
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
       } else {
-        // Just upload local if no remote exists
         await setDoc(desafioDocRef, {
           ...localDesafio,
           userId,
@@ -175,11 +245,10 @@ export async function syncUserData(userId: string): Promise<SyncStats> {
       }
       stats.desafioSynced = true;
     } else {
-      // If no local, try downloading from remote
       const remoteDesafioSnap = await getDoc(desafioDocRef);
       if (remoteDesafioSnap.exists()) {
         const remoteData = remoteDesafioSnap.data();
-        const { userId, updatedAt, ...desafioData } = remoteData;
+        const { userId: uid, updatedAt, ...desafioData } = remoteData;
         localStorage.setItem('jornada_desafio_365_progress', JSON.stringify(desafioData));
         stats.desafioSynced = true;
       }

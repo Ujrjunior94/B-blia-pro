@@ -6,7 +6,6 @@ import { BibleReader } from './components/BibleReader';
 import { InterlinearReader } from './components/InterlinearReader';
 import { DictionaryView } from './components/DictionaryView';
 import { CharactersView } from './components/CharactersView';
-import { MapsView } from './components/MapsView';
 import { BibleJourneyModule } from './components/BibleJourneyModule';
 import { Desafio365View } from './components/Desafio365View';
 import { NotesAndSearchView } from './components/NotesAndSearchView';
@@ -21,7 +20,7 @@ import { Compass, BookOpen, Layers, Sparkles, Flame, Award, User } from 'lucide-
 
 export function App() {
   const { theme, setTheme } = useTheme();
-  const [activeTab, setActiveTab] = useState<'home' | 'reader' | 'interlinear' | 'dictionary' | 'characters' | 'maps' | 'study' | 'challenge' | 'notes' | 'ai' | 'devotional'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'reader' | 'interlinear' | 'dictionary' | 'characters' | 'study' | 'challenge' | 'notes' | 'ai' | 'devotional'>('home');
   const [currentBook, setCurrentBook] = useState<BibleBook>(BIBLE_BOOKS[0]); // Genesis
   const [currentChapter, setCurrentChapter] = useState<number>(1);
   const [isBookSelectorOpen, setIsBookSelectorOpen] = useState<boolean>(false);
@@ -163,10 +162,6 @@ export function App() {
 
             {activeTab === 'characters' && (
               <CharactersView />
-            )}
-
-            {activeTab === 'maps' && (
-              <MapsView />
             )}
 
             {activeTab === 'study' && (

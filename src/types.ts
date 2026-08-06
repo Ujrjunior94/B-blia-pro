@@ -160,6 +160,19 @@ export interface ReaderSettings {
   continuousReading: boolean;
 }
 
+export interface UserProgress {
+  userId: string;
+  chaptersReadCount: number;
+  readChapters: string[];
+  activePlans: string[];
+  planProgress: { [planId: string]: number[] };
+  desafioCompletedDays: number[];
+  monthlyDevotionalsCompletions: { [key: string]: boolean };
+  monthlyDevotionalsJournals: { [key: string]: string };
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface SearchResult {
   bookId: string;
   bookName: string;
