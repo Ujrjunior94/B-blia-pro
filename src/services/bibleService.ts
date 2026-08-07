@@ -57,24 +57,110 @@ export const BIBLE_VERSIONS: BibleVersion[] = [
   },
 ];
 
+const ENGLISH_BOOK_NAMES: Record<string, string> = {
+  GEN: 'Genesis',
+  EXO: 'Exodus',
+  LEV: 'Leviticus',
+  NUM: 'Numbers',
+  DEU: 'Deuteronomy',
+  JOS: 'Joshua',
+  JDG: 'Judges',
+  RUT: 'Ruth',
+  '1SA': '1 Samuel',
+  '2SA': '2 Samuel',
+  '1KI': '1 Kings',
+  '2KI': '2 Kings',
+  '1CH': '1 Chronicles',
+  '2CH': '2 Chronicles',
+  EZR: 'Ezra',
+  NEH: 'Nehemiah',
+  EST: 'Esther',
+  JOB: 'Job',
+  PSA: 'Psalms',
+  PRO: 'Proverbs',
+  ECC: 'Ecclesiastes',
+  SNG: 'Song of Solomon',
+  ISA: 'Isaiah',
+  JER: 'Jeremiah',
+  LAM: 'Lamentations',
+  EZK: 'Ezekiel',
+  DAN: 'Daniel',
+  HOS: 'Hosea',
+  JOL: 'Joel',
+  AMO: 'Amos',
+  OBA: 'Obadiah',
+  JON: 'Jonah',
+  MIC: 'Micah',
+  NAM: 'Nahum',
+  HAB: 'Habakkuk',
+  ZEP: 'Zephaniah',
+  HAG: 'Haggai',
+  ZEC: 'Zechariah',
+  MAL: 'Malachi',
+  MAT: 'Matthew',
+  MRK: 'Mark',
+  LUK: 'Luke',
+  JHN: 'John',
+  ACT: 'Acts',
+  ROM: 'Romans',
+  '1CO': '1 Corinthians',
+  '2CO': '2 Corinthians',
+  GAL: 'Galatians',
+  EPH: 'Ephesians',
+  PHP: 'Philippians',
+  COL: 'Colossians',
+  '1TH': '1 Thessalonians',
+  '2TH': '2 Thessalonians',
+  '1TI': '1 Timothy',
+  '2TI': '2 Timothy',
+  TIT: 'Titus',
+  PHM: 'Philemon',
+  HEB: 'Hebrews',
+  JAS: 'James',
+  '1PE': '1 Peter',
+  '2PE': '2 Paper', // Support alternative
+  '1JN': '1 John',
+  '2JN': '2 John',
+  '3JN': '3 John',
+  JUD: 'Jude',
+  REV: 'Revelation'
+};
+
+// Map alternative variations for extreme safety
+ENGLISH_BOOK_NAMES['1PE'] = '1 Peter';
+ENGLISH_BOOK_NAMES['2PE'] = '2 Peter';
+
 export async function fetchChapterVerses(
   bookId: string,
   chapter: number,
   version: BibleVersionCode
 ): Promise<Verse[]> {
   const normalizedBookId = bookId.toUpperCase();
-  const cacheKey = `${version}-${normalizedBookId}-${chapter}`;
-
+  
   // 1. Check pre-bundled sample dataset first (fastest, guaranteed)
-  if (SAMPLE_VERSES[cacheKey] && SAMPLE_VERSES[cacheKey].length > 0) {
-    return SAMPLE_VERSES[cacheKey];
+  // Try both order formats for total robustness: 'GEN-1-ARC' and 'ARC-GEN-1'
+  const keyFormat1 = `${normalizedBookId}-${chapter}-${version}`;
+  const keyFormat2 = `${version}-${normalizedBookId}-${chapter}`;
+  
+  if (SAMPLE_VERSES[keyFormat1] && SAMPLE_VERSES[keyFormat1].length > 0) {
+    return SAMPLE_VERSES[keyFormat1];
+  }
+  if (SAMPLE_VERSES[keyFormat2] && SAMPLE_VERSES[keyFormat2].length > 0) {
+    return SAMPLE_VERSES[keyFormat2];
   }
 
   // 2. Check IndexedDB cached storage for offline reading
   try {
     const cached = await localDB.getCachedChapterVerses(version, normalizedBookId, chapter);
     if (cached && cached.length > 0) {
-      return cached;
+      // Self-healing check: if cached text has mock placeholder text and user is online, let's bypass cache to refresh with real text!
+      const containsFallbackText = cached.some(v => 
+        (v.text && v.text.includes('Palavra inspirada do livro')) || 
+        (v.text && v.text.startsWith('Interlinear: '))
+      );
+      if (!containsFallbackText || !navigator.onLine) {
+        return cached;
+      }
     }
   } catch (err) {
     console.warn('Error reading from IndexedDB:', err);
@@ -83,9 +169,8 @@ export async function fetchChapterVerses(
   // 3. Attempt external open-source API fetch (e.g. bible-api.com) if online
   if (navigator.onLine && version !== 'INTERLINEAR') {
     try {
-      const bookObj = getBookById(normalizedBookId);
-      const bookNameForApi = bookObj ? bookObj.name : normalizedBookId;
-      const apiRes = await fetch(`https://bible-api.com/${encodeURIComponent(bookNameForApi)}+${chapter}?translation=almeida`);
+      const englishBookName = ENGLISH_BOOK_NAMES[normalizedBookId] || normalizedBookId;
+      const apiRes = await fetch(`https://bible-api.com/${encodeURIComponent(englishBookName)}+${chapter}?translation=almeida`);
       if (apiRes.ok) {
         const data = await apiRes.json();
         if (data.verses && Array.isArray(data.verses)) {
@@ -111,7 +196,7 @@ export async function fetchChapterVerses(
     }
   }
 
-// 4. Fallback generated verses for complete continuous reading
+  // 4. Fallback generated verses for complete continuous reading
   const fallback = generateFallbackChapterVerses(normalizedBookId, chapter, version);
   await localDB.cacheChapterVerses(version, normalizedBookId, chapter, fallback);
   return fallback;
