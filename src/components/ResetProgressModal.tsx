@@ -17,6 +17,7 @@ export const ResetProgressModal: React.FC<ResetProgressModalProps> = ({
   const [isResetting, setIsResetting] = useState(false);
   const [resetDone, setResetDone] = useState(false);
   const [agreedToRisk, setAgreedToRisk] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -26,6 +27,7 @@ export const ResetProgressModal: React.FC<ResetProgressModalProps> = ({
   const handleExecuteReset = async () => {
     if (!isInputValid) return;
     setIsResetting(true);
+    setError(null);
 
     try {
       await localDB.clearUserData();
@@ -39,7 +41,7 @@ export const ResetProgressModal: React.FC<ResetProgressModalProps> = ({
       }, 1500);
     } catch (err) {
       console.error('Erro ao zerar progresso:', err);
-      alert('Ocorreu um erro ao zerar seu progresso. Tente novamente.');
+      setError('Ocorreu um erro ao zerar seu progresso. Tente novamente.');
     } finally {
       setIsResetting(false);
     }
@@ -100,6 +102,13 @@ export const ResetProgressModal: React.FC<ResetProgressModalProps> = ({
                 <li>Planos de leitura personalizados criados por você</li>
               </ul>
             </div>
+
+            {error && (
+              <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/25 text-rose-700 dark:text-rose-400 text-xs font-sans font-medium flex items-center gap-2 animate-fade-in">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
+                <span>{error}</span>
+              </div>
+            )}
 
             {/* Checkbox Risk Agreement */}
             <label className="flex items-start gap-3 p-3 rounded-xl bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 cursor-pointer select-none">

@@ -24,6 +24,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [isLogsModalOpen, setIsLogsModalOpen] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [showConfirmCounters, setShowConfirmCounters] = useState(false);
+  const [showConfirmNotes, setShowConfirmNotes] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -84,20 +86,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   // Reset Reading Counters
   const handleResetCounters = () => {
-    if (window.confirm('Deseja zerar todos os contadores de leitura (dias seguidos, desafio 365 e progresso dos planos)?')) {
-      localDB.resetReadingCounters();
-      setFeedbackMsg({ type: 'success', text: 'Contadores de leitura zerados com sucesso! Recarregando...' });
-      setTimeout(() => window.location.reload(), 1200);
-    }
+    localDB.resetReadingCounters();
+    setFeedbackMsg({ type: 'success', text: 'Contadores de leitura zerados com sucesso! Recarregando...' });
+    setTimeout(() => window.location.reload(), 1200);
   };
 
   // Reset Notes & Highlights
   const handleResetNotes = async () => {
-    if (window.confirm('Deseja apagar todas as anotações, destaques de versículos e marcadores?')) {
-      await localDB.resetNotesAndHighlights();
-      setFeedbackMsg({ type: 'success', text: 'Anotações e destaques removidos com sucesso! Recarregando...' });
-      setTimeout(() => window.location.reload(), 1200);
-    }
+    await localDB.resetNotesAndHighlights();
+    setFeedbackMsg({ type: 'success', text: 'Anotações e destaques removidos com sucesso! Recarregando...' });
+    setTimeout(() => window.location.reload(), 1200);
   };
 
   return (
@@ -299,22 +297,64 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               Zere apenas seus contadores de dias seguidos, progresso do Desafio 365 e planos sem apagar suas anotações.
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <button
-                onClick={handleResetCounters}
-                className="py-2.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-sans font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
-              >
-                <RotateCcw className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">Zerar Contadores</span>
-              </button>
+            <div className="space-y-2">
+              {showConfirmCounters ? (
+                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/35 text-xs font-sans space-y-2 animate-fade-in">
+                  <p className="font-extrabold text-amber-800 dark:text-amber-400">Deseja realmente zerar todos os contadores de leitura?</p>
+                  <p className="text-stone-600 dark:text-stone-300">Isso apagará dias seguidos, progresso do Desafio 365 e progresso dos planos de leitura.</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleResetCounters}
+                      className="py-1.5 px-3 rounded-lg bg-amber-600 text-white font-sans font-extrabold cursor-pointer hover:bg-amber-700 transition-colors"
+                    >
+                      Sim, zerar
+                    </button>
+                    <button
+                      onClick={() => setShowConfirmCounters(false)}
+                      className="py-1.5 px-3 rounded-lg bg-stone-200 dark:bg-stone-800 text-stone-800 dark:text-stone-200 font-sans font-bold cursor-pointer hover:bg-stone-300 dark:hover:bg-stone-700 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : showConfirmNotes ? (
+                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/35 text-xs font-sans space-y-2 animate-fade-in">
+                  <p className="font-extrabold text-amber-800 dark:text-amber-400">Deseja realmente apagar todas as suas anotações e marcadores?</p>
+                  <p className="text-stone-600 dark:text-stone-300">Essa ação removerá de forma permanente todos os seus destaques, notas e favoritos locais.</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleResetNotes}
+                      className="py-1.5 px-3 rounded-lg bg-amber-600 text-white font-sans font-extrabold cursor-pointer hover:bg-amber-700 transition-colors"
+                    >
+                      Sim, apagar
+                    </button>
+                    <button
+                      onClick={() => setShowConfirmNotes(false)}
+                      className="py-1.5 px-3 rounded-lg bg-stone-200 dark:bg-stone-800 text-stone-800 dark:text-stone-200 font-sans font-bold cursor-pointer hover:bg-stone-300 dark:hover:bg-stone-700 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setShowConfirmCounters(true)}
+                    className="py-2.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-sans font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">Zerar Contadores</span>
+                  </button>
 
-              <button
-                onClick={handleResetNotes}
-                className="py-2.5 px-3 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 font-sans font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <RotateCcw className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">Zerar Anotações</span>
-              </button>
+                  <button
+                    onClick={() => setShowConfirmNotes(true)}
+                    className="py-2.5 px-3 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 font-sans font-extrabold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">Zerar Anotações</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 

@@ -37,6 +37,7 @@ export const PrayerJournalView: React.FC = () => {
   const [testimonyInput, setTestimonyInput] = useState('');
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [deletingPrayerId, setDeletingPrayerId] = useState<string | null>(null);
 
   useEffect(() => {
     loadPrayers();
@@ -109,10 +110,13 @@ export const PrayerJournalView: React.FC = () => {
   };
 
   const handleDelete = async (prayerId: string) => {
-    if (window.confirm('Tem certeza que deseja remover este pedido de oração?')) {
+    if (deletingPrayerId === prayerId) {
       await deletePrayer(prayerId);
       loadPrayers();
       showToast('Pedido de oração removido.');
+      setDeletingPrayerId(null);
+    } else {
+      setDeletingPrayerId(prayerId);
     }
   };
 
@@ -372,10 +376,18 @@ export const PrayerJournalView: React.FC = () => {
                     </button>
                     <button
                       onClick={() => handleDelete(prayer.id)}
-                      className="p-1.5 rounded-xl hover:bg-rose-500/10 text-stone-400 hover:text-rose-600 transition-colors cursor-pointer"
-                      title="Remover Pedido"
+                      onMouseLeave={() => {
+                        if (deletingPrayerId === prayer.id) setDeletingPrayerId(null);
+                      }}
+                      className={`p-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1 ${
+                        deletingPrayerId === prayer.id
+                          ? 'bg-rose-600 text-white hover:bg-rose-700 px-2'
+                          : 'hover:bg-rose-500/10 text-stone-400 hover:text-rose-600'
+                      }`}
+                      title={deletingPrayerId === prayer.id ? "Clique novamente para confirmar" : "Remover Pedido"}
                     >
                       <Trash2 className="w-4 h-4" />
+                      {deletingPrayerId === prayer.id && <span className="text-[10px] font-sans font-bold">Confirmar?</span>}
                     </button>
                   </div>
                 </div>

@@ -36,6 +36,7 @@ export const ErrorLogsModal: React.FC<ErrorLogsModalProps> = ({ isOpen, onClose 
   const [copied, setCopied] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
   const [selectedLog, setSelectedLog] = useState<ErrorLogEntry | null>(null);
+  const [showConfirmClear, setShowConfirmClear] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -72,9 +73,12 @@ export const ErrorLogsModal: React.FC<ErrorLogsModalProps> = ({ isOpen, onClose 
   };
 
   const handleClearLogs = () => {
-    if (confirm('Deseja realmente limpar todos os logs de diagnóstico?')) {
+    if (showConfirmClear) {
       clearErrorLogs();
       setSelectedLog(null);
+      setShowConfirmClear(false);
+    } else {
+      setShowConfirmClear(true);
     }
   };
 
@@ -183,10 +187,16 @@ export const ErrorLogsModal: React.FC<ErrorLogsModalProps> = ({ isOpen, onClose 
 
               <button
                 onClick={handleClearLogs}
-                className="p-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-xs transition-colors cursor-pointer"
-                title="Limpar todos os logs"
+                onMouseLeave={() => setShowConfirmClear(false)}
+                className={`p-2 rounded-xl text-xs transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  showConfirmClear
+                    ? 'bg-red-600 text-white border-red-650 px-3'
+                    : 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20'
+                }`}
+                title={showConfirmClear ? "Clique novamente para confirmar" : "Limpar todos os logs"}
               >
                 <Trash2 className="w-4 h-4" />
+                {showConfirmClear && <span className="font-sans font-bold">Confirmar?</span>}
               </button>
             </div>
           </div>
