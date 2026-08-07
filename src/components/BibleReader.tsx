@@ -40,7 +40,8 @@ import {
   Gauge
 } from 'lucide-react';
 import { BibleBook, BibleVersionCode, ReaderSettings, UserBookmark, UserHighlight, UserNote, Verse } from '../types';
-import { fetchChapterVerses, BIBLE_VERSIONS } from '../services/bibleService';
+import { BIBLE_VERSIONS } from '../services/bibleService';
+import { useBibleData } from '../hooks/useBibleData';
 import { localDB } from '../utils/db';
 import { VerseShareModal } from './VerseShareModal';
 import { DevotionalCardModal } from './DevotionalCardModal';
@@ -105,8 +106,9 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
   onOpenBookSelector,
   onOpenStudyGuide,
 }) => {
-  const [verses, setVerses] = useState<Verse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { verses, isLoading } = useBibleData(currentBook.id, currentChapter, settings.version);
+  const loading = isLoading;
+
   const [selectedVerse, setSelectedVerse] = useState<Verse | null>(null);
   const [highlights, setHighlights] = useState<UserHighlight[]>([]);
   const [bookmarks, setBookmarks] = useState<UserBookmark[]>([]);
@@ -319,24 +321,9 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
     }
   }, [currentBook, currentChapter]);
 
-  // Load verses & local cached highlights
+  // Load local cached highlights, bookmarks, and notes
   useEffect(() => {
     let isMounted = true;
-    setLoading(true);
-
-    fetchChapterVerses(currentBook.id, currentChapter, settings.version)
-      .then((data) => {
-        if (isMounted) {
-          setVerses(data);
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (isMounted) {
-          console.error('Error fetching chapter verses:', err);
-          setLoading(false);
-        }
-      });
 
     localDB
       .getHighlights()
@@ -356,7 +343,7 @@ export const BibleReader: React.FC<BibleReaderProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [currentBook.id, currentChapter, settings.version]);
+  }, [currentBook.id, currentChapter]);
 
   const handleToggleHighlight = async (color: string, targetVerse?: Verse) => {
     const verseToHighlight = targetVerse || selectedVerse;

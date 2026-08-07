@@ -43,7 +43,10 @@ export class LocalBibleDatabase {
       };
 
       request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
+      request.onerror = () => {
+        this.dbPromise = null;
+        reject(request.error);
+      };
     });
 
     return this.dbPromise;
@@ -58,7 +61,10 @@ export class LocalBibleDatabase {
         const store = tx.objectStore('highlights');
         const req = store.getAll();
         req.onsuccess = () => resolve(req.result || []);
-        req.onerror = () => resolve([]);
+        req.onerror = (e) => {
+          e.preventDefault();
+          resolve([]);
+        };
       });
     } catch {
       return [];
@@ -68,8 +74,18 @@ export class LocalBibleDatabase {
   async saveHighlight(highlight: UserHighlight): Promise<void> {
     try {
       const db = await this.getDB();
-      const tx = db.transaction('highlights', 'readwrite');
-      tx.objectStore('highlights').put(highlight);
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('highlights', 'readwrite');
+        const store = tx.objectStore('highlights');
+        const req = store.put(highlight);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(new Error('Transaction aborted'));
+        req.onerror = (e) => {
+          e.preventDefault();
+          reject(req.error);
+        };
+      });
     } catch (e) {
       console.error('Error saving highlight to IDB', e);
     }
@@ -78,8 +94,18 @@ export class LocalBibleDatabase {
   async removeHighlight(id: string): Promise<void> {
     try {
       const db = await this.getDB();
-      const tx = db.transaction('highlights', 'readwrite');
-      tx.objectStore('highlights').delete(id);
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('highlights', 'readwrite');
+        const store = tx.objectStore('highlights');
+        const req = store.delete(id);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(new Error('Transaction aborted'));
+        req.onerror = (e) => {
+          e.preventDefault();
+          reject(req.error);
+        };
+      });
     } catch (e) {
       console.error('Error removing highlight', e);
     }
@@ -94,7 +120,10 @@ export class LocalBibleDatabase {
         const store = tx.objectStore('notes');
         const req = store.getAll();
         req.onsuccess = () => resolve(req.result || []);
-        req.onerror = () => resolve([]);
+        req.onerror = (e) => {
+          e.preventDefault();
+          resolve([]);
+        };
       });
     } catch {
       return [];
@@ -104,8 +133,18 @@ export class LocalBibleDatabase {
   async saveNote(note: UserNote): Promise<void> {
     try {
       const db = await this.getDB();
-      const tx = db.transaction('notes', 'readwrite');
-      tx.objectStore('notes').put(note);
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('notes', 'readwrite');
+        const store = tx.objectStore('notes');
+        const req = store.put(note);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(new Error('Transaction aborted'));
+        req.onerror = (e) => {
+          e.preventDefault();
+          reject(req.error);
+        };
+      });
     } catch (e) {
       console.error('Error saving note', e);
     }
@@ -114,8 +153,18 @@ export class LocalBibleDatabase {
   async deleteNote(id: string): Promise<void> {
     try {
       const db = await this.getDB();
-      const tx = db.transaction('notes', 'readwrite');
-      tx.objectStore('notes').delete(id);
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('notes', 'readwrite');
+        const store = tx.objectStore('notes');
+        const req = store.delete(id);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(new Error('Transaction aborted'));
+        req.onerror = (e) => {
+          e.preventDefault();
+          reject(req.error);
+        };
+      });
     } catch (e) {
       console.error('Error deleting note', e);
     }
@@ -130,7 +179,10 @@ export class LocalBibleDatabase {
         const store = tx.objectStore('bookmarks');
         const req = store.getAll();
         req.onsuccess = () => resolve(req.result || []);
-        req.onerror = () => resolve([]);
+        req.onerror = (e) => {
+          e.preventDefault();
+          resolve([]);
+        };
       });
     } catch {
       return [];
@@ -140,8 +192,18 @@ export class LocalBibleDatabase {
   async saveBookmark(bookmark: UserBookmark): Promise<void> {
     try {
       const db = await this.getDB();
-      const tx = db.transaction('bookmarks', 'readwrite');
-      tx.objectStore('bookmarks').put(bookmark);
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('bookmarks', 'readwrite');
+        const store = tx.objectStore('bookmarks');
+        const req = store.put(bookmark);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(new Error('Transaction aborted'));
+        req.onerror = (e) => {
+          e.preventDefault();
+          reject(req.error);
+        };
+      });
     } catch (e) {
       console.error('Error saving bookmark', e);
     }
@@ -150,8 +212,18 @@ export class LocalBibleDatabase {
   async removeBookmark(id: string): Promise<void> {
     try {
       const db = await this.getDB();
-      const tx = db.transaction('bookmarks', 'readwrite');
-      tx.objectStore('bookmarks').delete(id);
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('bookmarks', 'readwrite');
+        const store = tx.objectStore('bookmarks');
+        const req = store.delete(id);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(new Error('Transaction aborted'));
+        req.onerror = (e) => {
+          e.preventDefault();
+          reject(req.error);
+        };
+      });
     } catch (e) {
       console.error('Error removing bookmark', e);
     }
@@ -176,8 +248,18 @@ export class LocalBibleDatabase {
   async savePlanProgress(progress: UserPlanProgress): Promise<void> {
     try {
       const db = await this.getDB();
-      const tx = db.transaction('planProgress', 'readwrite');
-      tx.objectStore('planProgress').put(progress);
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('planProgress', 'readwrite');
+        const store = tx.objectStore('planProgress');
+        const req = store.put(progress);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(new Error('Transaction aborted'));
+        req.onerror = (e) => {
+          e.preventDefault();
+          reject(req.error);
+        };
+      });
     } catch (e) {
       console.error('Error saving plan progress', e);
     }
@@ -187,11 +269,16 @@ export class LocalBibleDatabase {
   async cacheChapterVerses(version: string, bookId: string, chapter: number, verses: Verse[]): Promise<void> {
     try {
       const db = await this.getDB();
-      const tx = db.transaction('verses', 'readwrite');
-      const store = tx.objectStore('verses');
-      verses.forEach((v) => {
-        const key = `${version}-${bookId}-${chapter}-${v.verse}`;
-        store.put({ id: key, version, bookId, chapter, verse: v.verse, verseObj: v });
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('verses', 'readwrite');
+        const store = tx.objectStore('verses');
+        verses.forEach((v) => {
+          const key = `${version}-${bookId}-${chapter}-${v.verse}`;
+          store.put({ id: key, version, bookId, chapter, verse: v.verse, verseObj: v });
+        });
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(new Error('Transaction aborted'));
       });
     } catch (e) {
       console.error('Error caching chapter verses', e);
@@ -215,7 +302,10 @@ export class LocalBibleDatabase {
             resolve(null);
           }
         };
-        req.onerror = () => resolve(null);
+        req.onerror = (e) => {
+          e.preventDefault();
+          resolve(null);
+        };
       });
     } catch {
       return null;
@@ -232,7 +322,10 @@ export class LocalBibleDatabase {
         // Count distinct chapters cached by counting entries
         const req = index.count(IDBKeyRange.bound([version, '', 0], [version, '\uffff', 9999]));
         req.onsuccess = () => resolve(req.result || 0);
-        req.onerror = () => resolve(0);
+        req.onerror = (e) => {
+          e.preventDefault();
+          resolve(0);
+        };
       });
     } catch {
       return 0;
@@ -247,17 +340,26 @@ export class LocalBibleDatabase {
   async deleteCachedVersion(version: string): Promise<void> {
     try {
       const db = await this.getDB();
-      const tx = db.transaction('verses', 'readwrite');
-      const store = tx.objectStore('verses');
-      const index = store.index('version_book_chap');
-      const req = index.openCursor(IDBKeyRange.bound([version, '', 0], [version, '\uffff', 9999]));
-      req.onsuccess = (e: any) => {
-        const cursor = e.target.result;
-        if (cursor) {
-          cursor.delete();
-          cursor.continue();
-        }
-      };
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('verses', 'readwrite');
+        const store = tx.objectStore('verses');
+        const index = store.index('version_book_chap');
+        const req = index.openCursor(IDBKeyRange.bound([version, '', 0], [version, '\uffff', 9999]));
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(new Error('Transaction aborted'));
+        req.onsuccess = (e: any) => {
+          const cursor = e.target.result;
+          if (cursor) {
+            cursor.delete();
+            cursor.continue();
+          }
+        };
+        req.onerror = (e) => {
+          e.preventDefault();
+          reject(req.error);
+        };
+      });
     } catch (e) {
       console.error('Error deleting cached version', e);
     }
@@ -269,8 +371,18 @@ export class LocalBibleDatabase {
       const db = await this.getDB();
       const stores = ['highlights', 'notes', 'bookmarks', 'planProgress'];
       for (const storeName of stores) {
-        const tx = db.transaction(storeName, 'readwrite');
-        tx.objectStore(storeName).clear();
+        await new Promise<void>((resolve, reject) => {
+          const tx = db.transaction(storeName, 'readwrite');
+          const store = tx.objectStore(storeName);
+          const req = store.clear();
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+          tx.onabort = () => reject(new Error('Transaction aborted'));
+          req.onerror = (e) => {
+            e.preventDefault();
+            reject(req.error);
+          };
+        });
       }
       localStorage.removeItem('jornada_desafio_365_progress');
       localStorage.removeItem('jornada_custom_reading_plans');
