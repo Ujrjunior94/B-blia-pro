@@ -7,6 +7,8 @@ import { BookChapterSelector } from './components/BookChapterSelector';
 import { OfflineManagerModal } from './components/OfflineManagerModal';
 import { AuthModal } from './components/AuthModal';
 import { SettingsModal } from './components/SettingsModal';
+import { ResetProgressModal } from './components/ResetProgressModal';
+import { ErrorLogsModal } from './components/ErrorLogsModal';
 import { BibleBook, ReaderSettings } from './types';
 import { BIBLE_BOOKS, getBookById } from './data/bibleBooks';
 import { useTheme } from './styles/themeConstants';
@@ -45,6 +47,8 @@ export function App() {
   const [isOfflineModalOpen, setIsOfflineModalOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [isResetProgressOpen, setIsResetProgressOpen] = useState<boolean>(false);
+  const [isErrorLogsOpen, setIsErrorLogsOpen] = useState<boolean>(false);
 
 
   const [settings, setSettings] = useState<ReaderSettings>({
@@ -274,6 +278,20 @@ export function App() {
         settings={settings}
         setSettings={setSettings}
         onOpenOfflineManager={() => setIsOfflineModalOpen(true)}
+        onOpenResetProgress={() => setIsResetProgressOpen(true)}
+        onOpenErrorLogs={() => setIsErrorLogsOpen(true)}
+      />
+
+      {/* Security Reset Modal */}
+      <ResetProgressModal
+        isOpen={isResetProgressOpen}
+        onClose={() => setIsResetProgressOpen(false)}
+      />
+
+      {/* Error Logs & Diagnostic Modal */}
+      <ErrorLogsModal
+        isOpen={isErrorLogsOpen}
+        onClose={() => setIsErrorLogsOpen(false)}
       />
 
       {/* Premium Mobile-First Bottom Navigation Bar - Hidden in Focus Reader Mode */}

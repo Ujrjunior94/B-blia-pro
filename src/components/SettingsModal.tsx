@@ -1,8 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { X, Settings, RotateCcw, ShieldAlert, Sliders, Type, Volume2, Moon, Download, Database, Activity, Upload, FileDown, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
 import { ReaderSettings } from '../types';
-import { ResetProgressModal } from './ResetProgressModal';
-import { ErrorLogsModal } from './ErrorLogsModal';
 import { localDB } from '../utils/db';
 
 interface SettingsModalProps {
@@ -11,6 +9,8 @@ interface SettingsModalProps {
   settings: ReaderSettings;
   setSettings: React.Dispatch<React.SetStateAction<ReaderSettings>>;
   onOpenOfflineManager?: () => void;
+  onOpenResetProgress: () => void;
+  onOpenErrorLogs: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -19,9 +19,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   settings,
   setSettings,
   onOpenOfflineManager,
+  onOpenResetProgress,
+  onOpenErrorLogs,
 }) => {
-  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
-  const [isLogsModalOpen, setIsLogsModalOpen] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isImporting, setIsImporting] = useState(false);
   const [showConfirmCounters, setShowConfirmCounters] = useState(false);
@@ -369,7 +369,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </span>
             </div>
             <button
-              onClick={() => setIsLogsModalOpen(true)}
+              onClick={onOpenErrorLogs}
               className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-sans font-bold text-xs cursor-pointer transition-all flex items-center gap-1.5 shrink-0 shadow-2xs"
             >
               <Activity className="w-3.5 h-3.5 shrink-0" />
@@ -418,7 +418,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             <button
-              onClick={() => setIsResetModalOpen(true)}
+              onClick={onOpenResetProgress}
               className="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-sans font-extrabold text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-2 shadow-sm"
             >
               <ShieldAlert className="w-4 h-4 shrink-0" />
@@ -427,18 +427,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
         </div>
-
-        {/* Security Reset Modal */}
-        <ResetProgressModal
-          isOpen={isResetModalOpen}
-          onClose={() => setIsResetModalOpen(false)}
-        />
-
-        {/* Error Logs & Diagnostic Modal */}
-        <ErrorLogsModal
-          isOpen={isLogsModalOpen}
-          onClose={() => setIsLogsModalOpen(false)}
-        />
 
       </div>
     </div>
