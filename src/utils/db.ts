@@ -404,8 +404,89 @@ export class LocalBibleDatabase {
       notes,
       highlights,
       bookmarks,
+      desafio365: localStorage.getItem('jornada_desafio_365_progress'),
+      customPlans: localStorage.getItem('jornada_custom_plans_v2'),
+      installedVersions: localStorage.getItem('jornada_installed_versions'),
     };
     return JSON.stringify(backupObj, null, 2);
+  }
+
+  // IMPORT USER DATA FROM BACKUP JSON
+  async importBackup(jsonString: string): Promise<{ success: boolean; notesCount: number; highlightsCount: number; bookmarksCount: number }> {
+    try {
+      const data = JSON.parse(jsonString);
+      let notesCount = 0;
+      let highlightsCount = 0;
+      let bookmarksCount = 0;
+
+      if (Array.isArray(data.notes)) {
+        for (const note of data.notes) {
+          if (note.id && (note.content || note.text)) {
+            await this.saveNote(note);
+            notesCount++;
+          }
+        }
+      }
+
+      if (Array.isArray(data.highlights)) {
+        for (const hl of data.highlights) {
+          if (hl.id && (hl.verseId || hl.verse)) {
+            await this.saveHighlight(hl);
+            highlightsCount++;
+          }
+        }
+      }
+
+      if (Array.isArray(data.bookmarks)) {
+        for (const bm of data.bookmarks) {
+          if (bm.id && (bm.bookId || bm.bookName)) {
+            await this.saveBookmark(bm);
+            bookmarksCount++;
+          }
+        }
+      }
+
+      if (data.desafio365) {
+        localStorage.setItem('jornada_desafio_365_progress', typeof data.desafio365 === 'string' ? data.desafio365 : JSON.stringify(data.desafio365));
+      }
+
+      if (data.customPlans) {
+        localStorage.setItem('jornada_custom_plans_v2', typeof data.customPlans === 'string' ? data.customPlans : JSON.stringify(data.customPlans));
+      }
+
+      return { success: true, notesCount, highlightsCount, bookmarksCount };
+    } catch (err) {
+      console.error('Error importing backup JSON:', err);
+      throw new Error('Formato de arquivo JSON inválido ou corrompido.');
+    }
+  }
+
+  // GRANULAR COUNTER RESETS
+  resetReadingCounters(): void {
+    localStorage.removeItem('jornada_desafio_365_progress');
+    localStorage.removeItem('jornada_reading_streaks');
+    localStorage.removeItem('jornada_custom_plans_v2');
+    localStorage.removeItem('jornada_monthly_devotionals_v1');
+    localStorage.removeItem('jornada_custom_reading_plans');
+  }
+
+  async resetNotesAndHighlights(): Promise<void> {
+    const db = await this.getDB();
+    const stores = ['highlights', 'notes', 'bookmarks'];
+    for (const storeName of stores) {
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readwrite');
+        const store = tx.objectStore(storeName);
+        const req = store.clear();
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(new Error('Transaction aborted'));
+        req.onerror = (e) => {
+          e.preventDefault();
+          reject(req.error);
+        };
+      });
+    }
   }
 }
 

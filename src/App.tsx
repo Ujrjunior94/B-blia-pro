@@ -5,6 +5,7 @@ import { HomeView } from './components/HomeView';
 import { BibleReader } from './components/BibleReader';
 import { BookChapterSelector } from './components/BookChapterSelector';
 import { OfflineManagerModal } from './components/OfflineManagerModal';
+import { AuthModal } from './components/AuthModal';
 import { BibleBook, ReaderSettings } from './types';
 import { BIBLE_BOOKS, getBookById } from './data/bibleBooks';
 import { useTheme } from './styles/themeConstants';
@@ -41,6 +42,7 @@ export function App() {
   const [currentChapter, setCurrentChapter] = useState<number>(1);
   const [isBookSelectorOpen, setIsBookSelectorOpen] = useState<boolean>(false);
   const [isOfflineModalOpen, setIsOfflineModalOpen] = useState<boolean>(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
 
 
   const [settings, setSettings] = useState<ReaderSettings>({
@@ -255,6 +257,12 @@ export function App() {
         onClose={() => setIsOfflineModalOpen(false)}
       />
 
+      {/* Auth & Account Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
+
       {/* Premium Mobile-First Bottom Navigation Bar - Hidden in Focus Reader Mode */}
       {!isFocusModeActive && (
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#FFFDF8]/95 dark:bg-[#1A1816]/95 backdrop-blur-md border-t border-[#E7DECF] dark:border-stone-800 shadow-[0_-4px_24px_rgba(31,27,22,0.03)] px-0.5 min-[360px]:px-1 sm:px-4 pt-1 sm:pt-2 pb-[calc(0.25rem+env(safe-area-inset-bottom,0px))] sm:pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] flex items-center justify-between sm:justify-around max-w-7xl mx-auto">
@@ -264,14 +272,20 @@ export function App() {
             { id: 'prayers', label: 'Oração', icon: HeartHandshake },
             { id: 'challenge', label: 'Jornada', icon: Award },
             { id: 'study', label: 'Estudo', icon: Sparkles },
-            { id: 'ai', label: 'Perfil', icon: User },
+            { id: 'profile', label: 'Perfil', icon: User, isAuth: true },
           ].map((item) => {
             const Icon = item.icon;
-            const isActive = activeTab === item.id;
+            const isActive = item.isAuth ? isAuthModalOpen : activeTab === item.id;
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id as any)}
+                onClick={() => {
+                  if (item.isAuth) {
+                    setIsAuthModalOpen(true);
+                  } else {
+                    setActiveTab(item.id as any);
+                  }
+                }}
                 className="flex flex-col items-center justify-center py-1 px-0.5 sm:px-2 rounded-xl transition-all duration-200 ease-out relative group flex-1 min-w-0 cursor-pointer overflow-hidden"
               >
                 <div
