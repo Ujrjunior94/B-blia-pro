@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { BookOpen, Sparkles, BookMarked, Calendar, Search, Bot, Download, Moon, Sun, Layers, ShieldCheck, Book, Users, Compass, Flame, Scroll, User, LogIn, Settings, HeartHandshake } from 'lucide-react';
 import { ReaderSettings } from '../types';
 import { auth, onAuthStateChanged, db, doc, getDoc } from '../services/firebase';
-import { SettingsModal } from './SettingsModal';
-import { AuthModal } from './AuthModal';
 
 interface HeaderProps {
   activeTab: 'home' | 'reader' | 'interlinear' | 'dictionary' | 'characters' | 'study' | 'challenge' | 'notes' | 'ai' | 'devotional' | 'prayers';
@@ -14,6 +12,8 @@ interface HeaderProps {
   currentBookName: string;
   currentChapter: number;
   onOpenOfflineManager: () => void;
+  onOpenAuth: () => void;
+  onOpenSettings: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -25,11 +25,11 @@ export const Header: React.FC<HeaderProps> = ({
   currentBookName,
   currentChapter,
   onOpenOfflineManager,
+  onOpenAuth,
+  onOpenSettings,
 }) => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [registeredName, setRegisteredName] = useState<string>('');
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -123,7 +123,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Settings Button */}
           <button
-            onClick={() => setIsSettingsOpen(true)}
+            onClick={onOpenSettings}
             className="p-2 sm:p-2.5 rounded-xl text-theme-secondary hover:text-theme-primary bg-theme-app border border-theme hover:bg-theme-card-hover transition-colors shadow-3xs cursor-pointer shrink-0"
             title="Configurações & Zerar Progresso"
           >
@@ -155,7 +155,7 @@ export const Header: React.FC<HeaderProps> = ({
           {/* User Auth Indicator */}
           {currentUser ? (
             <button
-              onClick={() => setIsAuthModalOpen(true)}
+              onClick={onOpenAuth}
               className="flex items-center gap-1.5 sm:gap-2 p-1 pl-2 sm:pl-2.5 rounded-xl bg-theme-accent/10 border border-theme-accent/20 hover:bg-theme-accent/20 text-theme-primary transition-all cursor-pointer shadow-3xs animate-fade-in shrink-0"
               title="Acessar Perfil & Sincronização"
             >
@@ -168,7 +168,7 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           ) : (
             <button
-              onClick={() => setIsAuthModalOpen(true)}
+              onClick={onOpenAuth}
               className="flex items-center gap-1 sm:gap-1.5 py-1.5 px-2.5 sm:px-3 rounded-xl bg-theme-accent hover:bg-theme-accent-hover text-white dark:text-[#1F1B16] font-sans font-extrabold text-xs cursor-pointer transition-all shadow-3xs shrink-0"
               title="Acessar Conta / Criar Conta"
             >
@@ -212,21 +212,6 @@ export const Header: React.FC<HeaderProps> = ({
           );
         })}
       </nav>
-
-      {/* Settings Modal */}
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        settings={settings}
-        setSettings={setSettings}
-        onOpenOfflineManager={onOpenOfflineManager}
-      />
-
-      {/* Auth & Login Modal */}
-      <AuthModal
-        isOpen={isAuthModalOpen}
-        onClose={() => setIsAuthModalOpen(false)}
-      />
     </header>
   );
 };

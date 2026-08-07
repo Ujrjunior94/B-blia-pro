@@ -6,6 +6,7 @@ import { BibleReader } from './components/BibleReader';
 import { BookChapterSelector } from './components/BookChapterSelector';
 import { OfflineManagerModal } from './components/OfflineManagerModal';
 import { AuthModal } from './components/AuthModal';
+import { SettingsModal } from './components/SettingsModal';
 import { BibleBook, ReaderSettings } from './types';
 import { BIBLE_BOOKS, getBookById } from './data/bibleBooks';
 import { useTheme } from './styles/themeConstants';
@@ -43,6 +44,7 @@ export function App() {
   const [isBookSelectorOpen, setIsBookSelectorOpen] = useState<boolean>(false);
   const [isOfflineModalOpen, setIsOfflineModalOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
 
 
   const [settings, setSettings] = useState<ReaderSettings>({
@@ -135,6 +137,8 @@ export function App() {
           currentBookName={currentBook.name}
           currentChapter={currentChapter}
           onOpenOfflineManager={() => setIsOfflineModalOpen(true)}
+          onOpenAuth={() => setIsAuthModalOpen(true)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
         />
       )}
 
@@ -261,6 +265,15 @@ export function App() {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+      />
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        settings={settings}
+        setSettings={setSettings}
+        onOpenOfflineManager={() => setIsOfflineModalOpen(true)}
       />
 
       {/* Premium Mobile-First Bottom Navigation Bar - Hidden in Focus Reader Mode */}
